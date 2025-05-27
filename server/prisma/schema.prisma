@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User{
+  id Int @id @default(autoincrement())
+  email String @unique
+  name String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  rentals Rental[]
+  reviews Review[]
+}
+
+model Rental {
+  id Int @id @default(autoincrement())
+  userId Int
+  itemId Int
+  startDate DateTime
+  endDate DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status    RentalStatus @default(PENDING)
+  item Item @relation(fields: [itemId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  payment Payment?
+}
+model Item {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  pricePerDay Float
+  available   Boolean   @default(true)
+  rentals     Rental[]
+  reviews     Review[]
+}
+
+model Payment {
+  id         Int       @id @default(autoincrement())
+  rentalId   Int @unique
+  amount     Float
+  paymentDate DateTime
+  method     String
+
+  rental     Rental  @relation(fields: [rentalId], references: [id])
+}
+model Review {
+  id      Int     @id @default(autoincrement())
+  userId  Int
+  itemId  Int
+  rating  Int     @default(5)
+  comment String?
+
+  user    User    @relation(fields: [userId], references: [id])
+  item    Item    @relation(fields: [itemId], references: [id])
+}
+
+enum RentalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
