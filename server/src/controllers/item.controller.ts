@@ -1,11 +1,34 @@
-import { Request, Response, NextFunction } from 'express';
+import {NextFunction, Response, Request} from 'express';
 import { ItemService } from '../services/item.service';
 
 const itemService = new ItemService();
 
 export const createItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const item = await itemService.createItem(req.body);
+    // Check if userId is present in the request
+    // This assumes that userId is set by a previous middleware (e.g., validateUser)
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'User authentication required'
+        }
+      });
+      return;
+    }
+    
+    // Create a clean object with only the required data
+    const itemData = {
+      name: req.body.name,
+      description: req.body.description,
+      pricePerDay: parseFloat(req.body.pricePerDay),
+      available: req.body.available !== undefined ? req.body.available : true,
+      userId: req.userId // Add the authenticated userId
+    };
+    
+    console.log('Processed item data:', itemData);
+    
+    const item = await itemService.createItem(itemData);
     res.status(201).json({
       success: true,
       data: item,

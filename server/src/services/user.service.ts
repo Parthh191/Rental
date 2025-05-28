@@ -78,7 +78,7 @@ export class UserService {
       }
 
       // Generate JWT token
-      const token = generateToken(user.email);
+      const token = generateToken({ email: user.email,id: user.id });
       if (!token) {
         throw createError('Failed to generate token', 500);
       }

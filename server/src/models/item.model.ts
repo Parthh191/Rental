@@ -3,6 +3,7 @@ export interface CreateItemInput {
   description?: string;
   pricePerDay: number;
   available?: boolean;
+  userId: number; // Added userId property for owner association
 }
 
 export interface UpdateItemInput {
