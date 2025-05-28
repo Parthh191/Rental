@@ -16,79 +16,28 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const users = await userService.getAllUsers();
-    res.status(200).json({
-      success: true,
-      data: users,
-      count: users.length
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      res.status(400).json({
+    const { email, password } = req.body;
+    const user = await UserService.login(email, password);
+    
+    if (!user) {
+      res.status(401).json({
         success: false,
-        error: { message: 'Invalid user ID' }
+        error: {
+          message: 'Invalid email or password'
+        }
       });
       return;
     }
-
-    const user = await userService.getUserById(id);
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      res.status(400).json({
-        success: false,
-        error: { message: 'Invalid user ID' }
-      });
-      return;
-    }
-
-    const user = await userService.updateUser(id, req.body);
+    
+    // The token is now included in the user object from the service
     res.status(200).json({
       success: true,
       data: user,
-      message: 'User updated successfully'
+      message: 'Login successful'
     });
   } catch (error) {
     next(error);
   }
-};
-
-export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      res.status(400).json({
-        success: false,
-        error: { message: 'Invalid user ID' }
-      });
-      return;
-    }
-
-    await userService.deleteUser(id);
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+}

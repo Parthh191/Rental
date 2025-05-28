@@ -1,10 +1,12 @@
 export interface CreateUserInput {
   email: string;
+  password: string;
   name?: string;
 }
 
 export interface UpdateUserInput {
   email?: string;
+  password?: string;
   name?: string;
 }
 
@@ -14,6 +16,7 @@ export interface UserResponse {
   name: string | null;
   createdAt: Date;
   updatedAt: Date;
+  token?: string; // JWT token for authenticated sessions
   rentals?: Array<{
     id: number;
     itemId: number;
