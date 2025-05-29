@@ -48,6 +48,12 @@ model Item {
   available   Boolean   @default(true)
   rentals     Rental[]
   reviews     Review[]
+  categoryId Int
+  category   Category? @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  imageUrl   String?
+  location   String?
 }
 
 model Payment {
@@ -68,6 +74,11 @@ model Review {
 
   user    User    @relation(fields: [userId], references: [id])
   item    Item    @relation(fields: [itemId], references: [id])
+}
+model Category {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  items Item[]
 }
 
 enum RentalStatus {

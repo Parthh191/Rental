@@ -3,9 +3,19 @@ export interface CreateItemInput {
   description?: string;
   pricePerDay: number;
   available?: boolean;
-  userId: number; // Added userId property for owner association
+  userId: number;
+  categoryId: number;
+  imageUrl?: string;
+  location: string;
 }
 
+export interface createCategoryInput {
+  name: string;
+}
+export interface CreateCategoryResponse {
+  id: number;
+  name: string;
+}
 export interface UpdateItemInput {
   name?: string;
   description?: string;
