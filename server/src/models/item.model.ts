@@ -43,3 +43,12 @@ export interface ItemResponse {
     comment: string | null;
   }>;
 }
+export interface UpdateItemInput {
+  name?: string;
+  description?: string;
+  pricePerDay?: number;
+  available?: boolean;
+  imageUrl?: string;
+  location?: string;
+  userId: number; // Required for ownership verification
+}

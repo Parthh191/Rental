@@ -1,5 +1,5 @@
 import {NextFunction, Response, Request} from 'express';
-import { ItemService } from '../services/item.service';
+import { ItemService} from '../services/item.service';
 
 const itemService = new ItemService();
 
@@ -57,6 +57,66 @@ export const createItem = async (req: Request, res: Response, next: NextFunction
       success: true,
       data: item,
       message: 'Item created successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getItemsByCategoryName = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const categoryName = req.params.categoryName;
+    if (!categoryName) {
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'Category name is required'
+        }
+      });
+      return;
+    }
+
+    const items = await itemService.getItemsByCategoryName(categoryName);
+    res.status(200).json({
+      success: true,
+      data: items,
+      message: 'Items retrieved successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: { message: 'Authentication required' }
+      });
+      return;
+    }
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'Invalid item ID' }
+      });
+      return;
+    }
+
+    // Add userId to the update data for ownership verification
+    const updateData = {
+      ...req.body,
+      userId: req.userId
+    };
+
+    const item = await itemService.updateItem(id, updateData);
+    res.status(200).json({
+      success: true,
+      data: item,
+      message: 'Item updated successfully'
     });
   } catch (error) {
     next(error);
