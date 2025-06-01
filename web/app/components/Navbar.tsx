@@ -16,58 +16,104 @@ import {
   PlusCircleIcon
 } from '@heroicons/react/24/outline';
 
-const Logo = () => (
-  <motion.div 
-    className="flex items-center gap-3"
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <Link href="/" className="flex items-center gap-3">
-      {/* Logo Icon Container */}
-      <div className="relative w-10 h-10">
-        {/* House/Box Shape with Gradient Border */}
-        <div className="absolute inset-0 bg-gray-900 rounded-xl border-2 border-transparent bg-clip-padding">
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-blue-500 to-violet-600 -z-10" />
-        </div>
-        
-        {/* "R" Letter */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.span 
-            className="text-2xl font-extrabold text-white"
-            initial={{ opacity: 0.5 }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+const Logo = () => {
+  const { scrollY } = useScroll();
+  const scrolled = useTransform(scrollY, [0, 50], [0, 1]);
+
+  return (
+    <Link href="/" className="group">
+      <div className="flex items-center gap-2">
+        <div className="w-12 h-12 relative group-hover:scale-110 transition-transform duration-300">
+          {/* Animated gradient background */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 
+            rounded-xl transform rotate-6 group-hover:rotate-12 transition-all duration-500 animate-pulse"
+          ></div>
+          
+          {/* Main logo container */}
+          <div 
+            className="absolute inset-0.5 bg-white dark:bg-gray-900 rounded-lg flex items-center 
+            justify-center overflow-hidden"
           >
-            R
+            {/* "R" letter with gradient */}
+            <motion.span 
+              className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 
+              bg-clip-text text-transparent group-hover:scale-125 transition-transform duration-300"
+              animate={{ 
+                textShadow: [
+                  "0 0 8px rgba(255,255,255,0.5)",
+                  "0 0 16px rgba(255,255,255,0.8)",
+                  "0 0 8px rgba(255,255,255,0.5)"
+                ]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
+            >
+              R
+            </motion.span>
+            
+            {/* Hover overlay effect */}
+            <div className="absolute inset-0 bg-white/40 dark:bg-gray-900/40 opacity-0 group-hover:opacity-30 
+            transition-opacity duration-300"></div>
+          </div>
+          
+          {/* Animated dot */}
+          <motion.div 
+            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 group-hover:bg-pink-500 
+            transition-colors duration-300"
+            animate={{
+              y: [0, -5, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          ></motion.div>
+        </div>
+
+        {/* Text content */}
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold relative overflow-hidden">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Rent
+            </span>
+            <motion.span 
+              style={{
+                color: useTransform(
+                  scrolled,
+                  [0, 1],
+                  ['rgb(255, 255, 255)', 'rgb(229, 231, 235)']
+                )
+              }}
+            >
+              Easy
+            </motion.span>
+            {/* Underline animation */}
+            <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 
+            to-pink-600 group-hover:w-full transition-all duration-300 ease-out"></div>
+          </h1>
+          <motion.span 
+            style={{
+              color: useTransform(
+                scrolled,
+                [0, 1],
+                ['rgb(209, 213, 219)', 'rgb(156, 163, 175)']
+              )
+            }}
+            className="text-xs"
+          >
+            Find. Book. Relax.
           </motion.span>
         </div>
-        
-        {/* Floating Circle/Dot */}
-        <motion.div 
-          className="absolute -right-1 -bottom-1 w-3 h-3 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/50"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: [0.8, 1.2, 0.8] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
-
-      {/* Logo Text */}
-      <div className="flex flex-col">
-        <div className="flex items-baseline">
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            Rent
-          </span>
-          <span className="text-xl font-bold text-white">
-            Easy
-          </span>
-        </div>
-        <span className="text-sm text-gray-400 -mt-1">
-          Find. Book. Relax.
-        </span>
       </div>
     </Link>
-  </motion.div>
-);
+  );
+};
 
 const ListNowButton = ({ isMobile = false }: { isMobile?: boolean }) => (
   <motion.div
@@ -102,7 +148,7 @@ const NavBar = () => {
   const backgroundColor = useTransform(
     scrollY,
     [0, 50],
-    ['rgba(0, 0, 0, 0)', 'rgba(17, 24, 39, 0.9)']
+    ['rgba(0, 0, 0, 0)', 'rgba(3, 3, 3, 0.9)']
   );
 
   useEffect(() => {
