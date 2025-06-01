@@ -1,9 +1,8 @@
 'use client';
 
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { motion, useScroll, useSpring } from 'framer-motion';
+import { useRef } from 'react';
 import ParticlesBackground from './components/Particles';
-import { useInView } from 'react-intersection-observer';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -17,6 +16,31 @@ const staggerContainer = {
       staggerChildren: 0.1
     }
   }
+};
+
+// Button animations
+const buttonHoverAnimation = {
+  scale: 1.05,
+  boxShadow: "0 10px 20px rgba(147, 51, 234, 0.3)",
+  transition: { duration: 0.3, ease: "easeOut" }
+};
+
+const buttonTapAnimation = {
+  scale: 0.95,
+  transition: { duration: 0.1 }
+};
+
+// Card animations
+const cardHoverAnimation = {
+  y: -8,
+  scale: 1.02,
+  boxShadow: "0 20px 30px rgba(147, 51, 234, 0.2)",
+  transition: { duration: 0.3, ease: "easeOut" }
+};
+
+const cardTapAnimation = {
+  scale: 0.98,
+  transition: { duration: 0.1 }
 };
 
 export default function Home() {
@@ -86,16 +110,16 @@ export default function Home() {
             transition={{ delay: 0.6 }}
           >
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
+              whileHover={buttonHoverAnimation}
+              whileTap={buttonTapAnimation}
+              className="px-8 py-4 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors cursor-pointer"
             >
               Browse Items
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 border border-purple-500 text-purple-400 rounded-full font-medium hover:bg-purple-600/10 transition-colors"
+              whileHover={buttonHoverAnimation}
+              whileTap={buttonTapAnimation}
+              className="px-8 py-4 border border-purple-500 text-purple-400 rounded-full font-medium hover:bg-purple-600/10 transition-colors cursor-pointer"
             >
               List Your Item
             </motion.button>
@@ -121,14 +145,15 @@ export default function Home() {
             {categories.map((category, index) => (
               <motion.div
                 key={category.title}
-                className="group p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10 hover:border-purple-500/30 transition-all"
-                whileHover={{ y: -5 }}
+                className="group relative overflow-hidden p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10 hover:border-purple-500/30 transition-all cursor-pointer"
+                whileHover={cardHoverAnimation}
+                whileTap={cardTapAnimation}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">
+                <div className="text-3xl mb-4">
                   {category.icon}
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">{category.title}</h3>
@@ -154,13 +179,21 @@ export default function Home() {
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                className="text-center p-6"
+                className="text-center p-6 cursor-pointer rounded-xl border border-transparent hover:border-purple-500/30"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={cardHoverAnimation}
+                whileTap={cardTapAnimation}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className="text-4xl mb-4">{feature.icon}</div>
+                <motion.div 
+                  className="text-4xl mb-4"
+                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {feature.icon}
+                </motion.div>
                 <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
                 <p className="text-gray-400">{feature.desc}</p>
               </motion.div>
@@ -195,9 +228,11 @@ export default function Home() {
             ].map((testimonial, index) => (
               <motion.div
                 key={index}
-                className="p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10"
+                className="p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10 cursor-pointer"
                 initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
+                whileHover={cardHoverAnimation}
+                whileTap={cardTapAnimation}
                 viewport={{ once: true }}
               >
                 <p className="text-gray-300 mb-4">&quot;{testimonial.text}&quot;</p>
@@ -230,58 +265,15 @@ export default function Home() {
               Join thousands of users already sharing and renting items on our platform
             </p>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors"
+              whileHover={buttonHoverAnimation}
+              whileTap={buttonTapAnimation}
+              className="px-8 py-4 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors cursor-pointer"
             >
               Get Started Now
             </motion.button>
           </motion.div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-black/50 backdrop-blur-sm border-t border-purple-500/10 py-12 px-4">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-white font-semibold mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">About</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Press</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Guidelines</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Privacy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Terms</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Security</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-4">Social</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Twitter</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">Instagram</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-purple-400 transition-colors">LinkedIn</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-purple-500/10 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 RentAnything. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }
