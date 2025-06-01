@@ -134,4 +134,33 @@ export const getAllItems = async (req: Request, res: Response, next: NextFunctio
   } catch (error) {
     next(error);
   }
-}
+};
+
+export const deleteItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: { message: 'Authentication required' }
+      });
+      return;
+    }
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'Invalid item ID' }
+      });
+      return;
+    }
+
+    await itemService.deleteItem(id, req.userId);
+    res.status(200).json({
+      success: true,
+      message: 'Item deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};

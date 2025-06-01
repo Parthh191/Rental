@@ -4,6 +4,7 @@ import {
   getItemsByCategoryName,
   updateItem,
   getAllItems,
+  deleteItem,
 } from '../controllers/item.controller';
 import { validateUser } from '../middlewares/user.middlewares';
 
@@ -18,5 +19,8 @@ router.get('/category/:categoryName', validateUser, getItemsByCategoryName);
 router.put('/update/:id', validateUser, updateItem);
 // GET /api/items - Get all items (public route)
 router.get('/',getAllItems);
+
+// Delete route for removing an item by ID (protected route)
+router.delete('/delete/:id', validateUser, deleteItem); 
 
 export default router;

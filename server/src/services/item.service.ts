@@ -293,4 +293,64 @@ export class ItemService {
       throw createError('Failed to fetch all items', 500);
     }
   }
+  async deleteItem(id: number, userId: number): Promise<ItemResponse> {
+    try {
+      if (!id || isNaN(id)) {
+        throw createError('Valid item ID is required', 400);
+      }
+
+      // First, fetch the item to check ownership
+      const existingItem = await prisma.item.findUnique({
+        where: { id },
+        include: {
+          owner: {
+            select: {
+              id: true
+            }
+          }
+        }
+      });
+
+      if (!existingItem) {
+        throw createError('Item not found', 404);
+      }
+
+      // Verify ownership
+      if (existingItem.owner.id !== userId) {
+        throw createError('Unauthorized: Only the owner can delete this item', 403);
+      }
+
+      // Delete the item
+      const deletedItem = await prisma.item.delete({
+        where: { id },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      console.log('Item deleted successfully:', JSON.stringify(deletedItem, null, 2));
+      return deletedItem;
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
+      
+      if (error.code === 'P2025') {
+        throw createError('Item not found', 404);
+      }
+      
+      if (error.statusCode) throw error;
+      throw createError('Failed to delete item', 500);
+    }
+  }
 }
