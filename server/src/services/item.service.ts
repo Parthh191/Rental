@@ -262,4 +262,35 @@ export class ItemService {
       throw createError('Failed to update item', 500);
     }
   }
+  async getAllItems(): Promise<ItemResponse[]> {
+    try {
+      const items = await prisma.item.findMany({
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      if (items.length === 0) {
+        throw createError('No items found', 404);
+      }
+
+      return items;
+    } catch (error: any) {
+      console.error('Error fetching all items:', error);
+      if (error.statusCode) throw error;
+      throw createError('Failed to fetch all items', 500);
+    }
+  }
 }

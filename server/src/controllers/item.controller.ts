@@ -122,3 +122,16 @@ export const updateItem = async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 };
+
+export const getAllItems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const items = await itemService.getAllItems();
+    res.status(200).json({
+      success: true,
+      data: items,
+      message: 'Items retrieved successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
