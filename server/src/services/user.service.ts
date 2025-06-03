@@ -48,8 +48,16 @@ export class UserService {
           updatedAt: true
         }
       });
-
-      return user as UserResponse;
+      console.log('Generating token for user:', data.email);
+      const token = generateToken({ email: user.email, id: user.id })
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        token // Include the JWT token
+      } as UserResponse;
     } catch (error: any) {
       if (error.statusCode) throw error;
       throw createError('Failed to create user', 500);
@@ -107,6 +115,99 @@ export class UserService {
     } catch (error) {
       console.error('Login service error:', error);
       throw createError('Login failed', 500);
+    }
+  }
+  async getUser(userId: number): Promise<UserResponse | null> {
+    try {
+      // Get user basic info
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          createdAt: true,
+          updatedAt: true,
+          rentals: { // Include user's rental history based on actual schema
+            select: {
+              id: true,
+              startDate: true,
+              endDate: true, 
+              status: true,
+              item: {
+                select: {
+                  id: true,
+                  name: true, // "name" is used instead of "title" in the schema
+                  imageUrl: true // "imageUrl" is used instead of "image" in the schema
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 5 // Limit to recent 5 rentals
+          },
+          items: { // Items listed by the user
+            select: {
+              id: true,
+              name: true, // "name" is used instead of "title" in the schema
+              pricePerDay: true, // "pricePerDay" is used instead of "price" in the schema
+              imageUrl: true, // "imageUrl" is used instead of "image" in the schema
+              available: true,
+              category: {
+                select: {
+                  name: true
+                }
+              },
+              location: true
+            },
+            take: 4 // Limit to 4 items for display
+          },
+          reviews: { // Reviews received by the user
+            select: {
+              id: true,
+              rating: true,
+              comment: true,
+              item: {
+                select: {
+                  name: true // "name" is used instead of "title" in the schema
+                }
+              }
+            },
+            orderBy: {
+              id: 'desc' // No createdAt in review table, using id as proxy
+            },
+            take: 5 // Limit to recent 5 reviews
+          }
+        }
+      });
+
+      if (!user) {
+        throw createError('User not found', 404);
+      }
+      
+      // Calculate user's average rating
+      let averageRating = 0;
+      if (user.reviews && user.reviews.length > 0) {
+        const totalRating = user.reviews.reduce((sum, review) => sum + review.rating, 0);
+        averageRating = totalRating / user.reviews.length;
+      }
+      
+      // Calculate total items listed and total items rented
+      const stats = {
+        itemsListed: user.items?.length || 0,
+        totalRentals: user.rentals?.length || 0,
+        totalReviews: user.reviews?.length || 0,
+        averageRating: averageRating.toFixed(1)
+      };
+      
+      return {
+        ...user,
+        stats
+      } as UserResponse;
+    } catch (error: any) {
+      if (error.statusCode) throw error;
+      throw createError('Failed to retrieve user', 500);
     }
   }
 }

@@ -59,3 +59,41 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     next(error);
   }
 }
+export const getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try{
+    const userId = req.userId; // userId is set by validateUser middleware
+    if (!userId) {
+      console.log('User ID not found in request');
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Unauthorized access'
+        }
+      });
+      return;
+    }
+
+    const user = await userService.getUser(userId);
+    
+    if (!user) {
+      console.log('User not found:', { userId });
+      res.status(404).json({
+        success: false,
+        error: {
+          message: 'User not found'
+        }
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: user,
+      message: 'User retrieved successfully'
+    });
+  }
+  catch (error) {
+    console.error('Get user error:', error);
+    next(error);
+  }
+}

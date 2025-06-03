@@ -3,19 +3,59 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 
-interface User {
+// Export the User interface
+export interface User {
   id: number;
   email: string;
   name: string | null;
   token: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  rentals?: Array<{
+    id: number;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    item: {
+      id: number;
+      name: string; // Using name instead of title as per schema
+      imageUrl: string | null; // Using imageUrl instead of image as per schema
+    }
+  }>;
+  items?: Array<{
+    id: number;
+    name: string; // Using name instead of title as per schema
+    pricePerDay: number; // Using pricePerDay instead of price as per schema
+    imageUrl: string | null; // Using imageUrl instead of image as per schema
+    available: boolean;
+    category: {
+      name: string;
+    };
+    location: string | null;
+  }>;
+  reviews?: Array<{
+    id: number;
+    rating: number;
+    comment: string | null;
+    item: {
+      name: string; // Using name instead of title as per schema
+    }
+  }>;
+  stats?: {
+    itemsListed: number;
+    totalRentals: number;
+    totalReviews: number;
+    averageRating: string;
+  }
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<User>;
   logout: () => void;
   isLoading: boolean;
+  fetchUserProfile: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -47,6 +87,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(status === 'loading');
   }, [session, status]);
 
+  const fetchUserProfile = async (): Promise<User | null> => {
+    try {
+      if (!user?.token) return null;
+      
+      const response = await fetch('http://localhost:3001/api/users/get', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      
+      // Update the user state with the fresh data
+      const updatedUser = {
+        ...user,
+        ...data.data,
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -71,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string): Promise<User> => {
     try {
       setIsLoading(true);
 
@@ -90,8 +164,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error?.message || 'Signup failed');
       }
 
+      // Extract user data and token from response
+      const userData: User = data.data;
+      
+      // Store the user data with JWT token
+      if (userData && userData.token) {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      }
+
       // Return the created user data
-      return data.data;
+      return userData;
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -107,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isLoading, fetchUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

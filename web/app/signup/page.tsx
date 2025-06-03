@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 // Animation variants
 const fadeIn = {
@@ -391,6 +392,7 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { signup } = useAuth();
 
   // Hide navbar and footer
   useEffect(() => {
@@ -418,39 +420,18 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // First register the user with the backend
-      const registerRes = await fetch('http://localhost:3001/api/users/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-        }),
-      });
-
-      const registerData = await registerRes.json();
-
-      if (!registerRes.ok) {
-        throw new Error(registerData.error?.message || 'Failed to create account');
+      // Use our enhanced signup function from AuthContext that stores the JWT token
+      const userData = await signup(email, password, name);
+      
+      // If we have a token in the userData, we don't need to sign in again
+      // as the AuthContext already stored the user data and token
+      if (userData && userData.token) {
+        // Redirect to home page on success
+        router.push('/');
+        router.refresh();
+      } else {
+        throw new Error('No token received after signup');
       }
-
-      // Then sign them in with NextAuth
-      const signInRes = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (signInRes?.error) {
-        throw new Error(signInRes.error);
-      }
-
-      // Redirect to home page on success
-      router.push('/');
-      router.refresh();
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {

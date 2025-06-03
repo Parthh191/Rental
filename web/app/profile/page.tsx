@@ -16,6 +16,9 @@ import {
   PlusCircleIcon
 } from '@heroicons/react/24/outline';
 
+// Import User interface from AuthContext
+import type { User } from '../context/AuthContext';
+
 // Animation variants
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -44,18 +47,156 @@ const cardTapAnimation = {
 };
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, fetchUserProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState<User | null>(null);
+  const [formattedData, setFormattedData] = useState({
+    stats: [] as { label: string; value: string | number; icon: any }[],
+    recentActivity: [] as any[],
+    listedItems: [] as any[]
+  });
 
   useEffect(() => {
-    // Simulate loading user data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
+    // Load user data from the server using JWT token
+    const loadUserProfile = async () => {
+      setIsLoading(true);
+      try {
+        const userData = await fetchUserProfile();
+        if (userData) {
+          setProfileData(userData);
+          formatDataForDisplay(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadUserProfile();
+  }, []); // Empty dependency array to ensure it only runs once
 
-    return () => clearTimeout(timer);
-  }, []);
+  // Format the user data for display in the UI
+  const formatDataForDisplay = (userData: User) => {
+    // Format stats
+    const stats = [
+      { 
+        label: 'Items Listed', 
+        value: userData.stats?.itemsListed || 0, 
+        icon: PlusCircleIcon 
+      },
+      { 
+        label: 'Items Rented', 
+        value: userData.stats?.totalRentals || 0, 
+        icon: ShoppingBagIcon 
+      },
+      { 
+        label: 'Reviews', 
+        value: userData.stats?.totalReviews || 0, 
+        icon: StarIcon 
+      },
+      { 
+        label: 'Rating', 
+        value: userData.stats?.averageRating || '0.0', 
+        icon: ChatBubbleLeftRightIcon 
+      }
+    ];
+
+    // Format activity (combine rentals and reviews)
+    const activity = [];
+    
+    // Add rentals to activity
+    if (userData.rentals && userData.rentals.length > 0) {
+      const rentalActivity = userData.rentals.map(rental => {
+        // Format dates for display - converting Date strings to actual Date objects
+        const startDate = new Date(rental.startDate);
+        const endDate = new Date(rental.endDate);
+        
+        // Calculate how long ago (e.g., 2 days ago, 1 week ago)
+        const daysSince = Math.floor((new Date().getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+        
+        let timeAgo;
+        if (daysSince === 0) timeAgo = 'Today';
+        else if (daysSince === 1) timeAgo = 'Yesterday';
+        else if (daysSince < 7) timeAgo = `${daysSince} days ago`;
+        else if (daysSince < 30) timeAgo = `${Math.floor(daysSince / 7)} week${Math.floor(daysSince / 7) > 1 ? 's' : ''} ago`;
+        else timeAgo = `${Math.floor(daysSince / 30)} month${Math.floor(daysSince / 30) > 1 ? 's' : ''} ago`;
+        
+        return {
+          type: 'rental',
+          item: rental.item.name, // Using name instead of title as per schema
+          date: timeAgo,
+          status: rental.status.toLowerCase(),
+          id: rental.id
+        };
+      });
+      
+      activity.push(...rentalActivity);
+    }
+    
+    // Add reviews to activity
+    if (userData.reviews && userData.reviews.length > 0) {
+      const reviewActivity = userData.reviews.map(review => {
+        // Since Review doesn't have createdAt in our schema, we'll use a placeholder date
+        const daysSince = Math.floor(Math.random() * 30); // Random date for display purposes
+        
+        let timeAgo;
+        if (daysSince === 0) timeAgo = 'Today';
+        else if (daysSince === 1) timeAgo = 'Yesterday';
+        else if (daysSince < 7) timeAgo = `${daysSince} days ago`;
+        else if (daysSince < 30) timeAgo = `${Math.floor(daysSince / 7)} week${Math.floor(daysSince / 7) > 1 ? 's' : ''} ago`;
+        
+        return {
+          type: 'review',
+          item: review.item.name, // Using name instead of title as per schema
+          date: timeAgo,
+          rating: review.rating,
+          comment: review.comment,
+          id: review.id
+        };
+      });
+      
+      activity.push(...reviewActivity);
+    }
+    
+    // Sort all activity by date (most recent first)
+    activity.sort((a, b) => {
+      // Basic sort by the date strings - this might need refinement
+      const dateA = a.date;
+      const dateB = b.date;
+      if (dateA === 'Today') return -1;
+      if (dateB === 'Today') return 1;
+      if (dateA === 'Yesterday') return -1;
+      if (dateB === 'Yesterday') return 1;
+      return 0; // Default - keep original order
+    });
+    
+    // Format listings
+    const listings = [];
+    if (userData.items && userData.items.length > 0) {
+      const formattedListings = userData.items.map(item => {
+        return {
+          id: item.id,
+          name: item.name, // Using name instead of title as per schema
+          category: item.category.name,
+          price: `$${item.pricePerDay}/day`, // Using pricePerDay instead of price as per schema
+          image: item.imageUrl || '📸', // Using imageUrl instead of image as per schema
+          location: item.location || 'No location specified',
+          available: item.available
+        };
+      });
+      
+      listings.push(...formattedListings);
+    }
+    
+    // Update state with formatted data
+    setFormattedData({
+      stats,
+      recentActivity: activity,
+      listedItems: listings
+    });
+  };
 
   const handleLogout = async () => {
     try {
@@ -71,28 +212,6 @@ export default function ProfilePage() {
       console.error("Logout failed:", error);
     }
   };
-
-  // Mock data for the profile page
-  const userStats = [
-    { label: 'Items Listed', value: 8, icon: PlusCircleIcon },
-    { label: 'Items Rented', value: 12, icon: ShoppingBagIcon },
-    { label: 'Reviews', value: 15, icon: StarIcon },
-    { label: 'Messages', value: 3, icon: ChatBubbleLeftRightIcon },
-  ];
-
-  const recentActivity = [
-    { type: 'rental', item: 'Canon EOS R5', date: '2 days ago', status: 'active' },
-    { type: 'return', item: 'DJI Drone Pro', date: '1 week ago', status: 'completed' },
-    { type: 'review', item: 'Camping Tent', date: '2 weeks ago', rating: 5 },
-    { type: 'listing', item: 'Mountain Bike', date: '1 month ago', status: 'active' },
-  ];
-
-  const listedItems = [
-    { name: 'DSLR Camera', category: 'Electronics', price: '$25/day', image: '📸' },
-    { name: 'Mountain Bike', category: 'Sports', price: '$15/day', image: '🚲' },
-    { name: 'Power Drill Set', category: 'Tools', price: '$10/day', image: '🔨' },
-    { name: 'Camping Tent', category: 'Outdoor', price: '$20/day', image: '⛺' },
-  ];
 
   return (
     <main className="relative min-h-screen pt-20 pb-10">
@@ -177,7 +296,7 @@ export default function ProfilePage() {
                 initial="initial"
                 animate="animate"
               >
-                {userStats.map((stat, index) => (
+                {formattedData.stats.map((stat, index) => (
                   <motion.div
                     key={stat.label}
                     className="p-6 rounded-xl bg-gray-900/50 backdrop-blur-md border border-purple-500/20 flex items-center gap-4"
@@ -222,7 +341,7 @@ export default function ProfilePage() {
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-4">Recent Activity</h2>
                     <div className="space-y-4">
-                      {recentActivity.map((activity, index) => (
+                      {formattedData.recentActivity.map((activity, index) => (
                         <motion.div
                           key={index}
                           className="p-4 rounded-lg bg-gray-900/50 backdrop-blur-md border border-purple-500/10"
@@ -278,7 +397,7 @@ export default function ProfilePage() {
                       </motion.button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {listedItems.map((item, index) => (
+                      {formattedData.listedItems.map((item, index) => (
                         <motion.div
                           key={index}
                           className="p-6 rounded-xl bg-gray-900/50 backdrop-blur-md border border-purple-500/10 flex flex-col"
