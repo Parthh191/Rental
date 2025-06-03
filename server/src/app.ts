@@ -1,9 +1,19 @@
 import express from "express";
+import cors from "cors";
 import User from './routes/user.routes';
 import Item  from "./routes/item.routes";
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
+
+// Enhanced CORS configuration
+app.use(cors({
+  origin: ['http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // API routes

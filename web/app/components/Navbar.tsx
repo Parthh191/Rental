@@ -160,22 +160,21 @@ const NavBar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Add debug logging to check user state
+  useEffect(() => {
+    console.log('Current user state:', user);
+  }, [user]);
+
   const navItems = [
     { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Rentals', href: '/rentals', icon: ShoppingBagIcon },
     { name: 'Categories', href: '/categories', icon: Square3Stack3DIcon },
     { name: 'How it Works', href: '/how-it-works', icon: QuestionMarkCircleIcon },
-    ...(!user 
-      ? [{ name: 'Login / Signup', href: '/auth', icon: UserCircleIcon }]
+    ...(user === null
+      ? [{ name: 'Login / Signup', href: '/login', icon: UserCircleIcon }]
       : [{ name: 'Profile', href: '/profile', icon: UserCircleIcon }]
     ),
   ];
-
-  const handleLogout = () => {
-    logout();
-    // You might want to redirect to home page after logout
-    window.location.href = '/';
-  };
 
   return (
     <motion.nav
@@ -229,18 +228,6 @@ const NavBar = () => {
 
             {/* List Now CTA Button - Desktop */}
             {user && <ListNowButton />}
-
-            {/* Logout Button */}
-            {user && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="text-gray-300 hover:text-red-400 transition-colors duration-200"
-              >
-                Logout
-              </motion.button>
-            )}
           </div>
 
           {/* Mobile menu button */}
@@ -300,20 +287,6 @@ const NavBar = () => {
                   </Link>
                 </motion.div>
               ))}
-
-              {/* Mobile Logout Button */}
-              {user && (
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <span>Logout</span>
-                  </button>
-                </motion.div>
-              )}
             </div>
           </motion.div>
         )}

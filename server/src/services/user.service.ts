@@ -59,30 +59,42 @@ export class UserService {
   static async login(email: string, password: string): Promise<UserResponse | null> {
     const emailValidation = isValidEmail(email);
     if (!emailValidation.isValid) {
+      console.log('Invalid email format:', email);
       throw createError(emailValidation.message!, 400);
     }
 
     if (!password) {
+      console.log('Password required but not provided');
       throw createError('Password is required', 400);
     }
 
     try {
+      console.log('Finding user by email:', email);
       const hashedPassword = hashPassword(password);
 
       const user = await prisma.user.findUnique({
         where: { email }
       });
 
-      if (!user || user.password !== hashedPassword) {
-        return null; // Invalid credentials
+      if (!user) {
+        console.log('User not found with email:', email);
+        return null; // User not found
+      }
+      
+      if (user.password !== hashedPassword) {
+        console.log('Password mismatch for user:', email);
+        return null; // Invalid password
       }
 
       // Generate JWT token
-      const token = generateToken({ email: user.email,id: user.id });
+      console.log('Generating token for user:', email);
+      const token = generateToken({ email: user.email, id: user.id });
       if (!token) {
+        console.error('Failed to generate token for user:', email);
         throw createError('Failed to generate token', 500);
       }
 
+      console.log('Login successful for user:', email);
       // Exclude password from the response and include token
       return {
         id: user.id,
@@ -93,6 +105,7 @@ export class UserService {
         token // Include the JWT token
       } as UserResponse;
     } catch (error) {
+      console.error('Login service error:', error);
       throw createError('Login failed', 500);
     }
   }

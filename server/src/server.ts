@@ -5,7 +5,8 @@ import prisma from './config/db';
 // Load environment variables
 dotenv.config();
 
-const PORT = process.env.PORT || 3000;
+// Change port to 3001 to avoid conflict with Next.js frontend
+const PORT = process.env.PORT || 3001;
 
 // Test database connection before starting the server
 async function startServer() {
