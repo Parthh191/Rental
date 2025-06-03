@@ -161,7 +161,7 @@ export default function ProfilePage() {
                       onClick={handleLogout}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition duration-300"
+                      className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition duration-300 hover:cursor-pointer"
                     >
                       <ArrowRightOnRectangleIcon className="h-5 w-5" />
                       Logout
