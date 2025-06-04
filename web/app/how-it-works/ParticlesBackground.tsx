@@ -137,13 +137,12 @@ export default function ParticlesBackground() {
         ctx.fill();
       });
       
-      // Connect nearby particles with brighter lines
-      connectParticles(ctx);
+      // The connectParticles function call is removed to stop drawing lines between particles
       
       animationFrameRef.current = requestAnimationFrame(animate);
     }
     
-    // Draw lines between close particles
+    // Connect nearby particles with brighter lines - Kept the function definition but it's not called anymore
     function connectParticles(ctx: CanvasRenderingContext2D) {
       const maxDistance = 180; // Increased connection distance
       
