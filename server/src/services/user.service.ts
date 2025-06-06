@@ -38,18 +38,17 @@ export class UserService {
           email: data.email,
           password: hashedPassword,
           name: data.name
-        },
-        // Exclude password from the response
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          createdAt: true,
-          updatedAt: true
         }
       });
+
       console.log('Generating token for user:', data.email);
-      const token = generateToken({ email: user.email, id: user.id })
+      // Generate token after user creation
+      const token = generateToken({ 
+        email: user.email, 
+        id: user.id,
+        name: user.name 
+      });
+
       return {
         id: user.id,
         email: user.email,

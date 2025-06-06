@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../utils/api';
 import Link from 'next/link';
@@ -9,8 +9,33 @@ import {
   AdjustmentsHorizontalIcon,
   ArrowPathIcon,
   TagIcon,
-  StarIcon
+  StarIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
+
+// Background particle component to add visual interest
+const BackgroundParticles = () => {
+  return (
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+      {[...Array(20)].map((_, i) => (
+        <div 
+          key={i} 
+          className="geometric-box opacity-30"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${Math.random() * 300 + 50}px`,
+            height: `${Math.random() * 300 + 50}px`,
+            animationDelay: `${Math.random() * 10}s`,
+            animationDuration: `${Math.random() * 30 + 15}s`
+          }}
+        />
+      ))}
+      
+      <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-transparent to-purple-900/20" />
+    </div>
+  );
+};
 
 // Types for our components
 interface Category {
@@ -69,8 +94,8 @@ const CategoryCard = ({ category, totalItems, onClick, isActive }: {
       className={`
         relative overflow-hidden p-5 rounded-xl cursor-pointer transition-all duration-300
         ${isActive 
-          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/20 border-2 border-purple-400' 
-          : 'bg-gray-900/50 border border-gray-800 hover:border-purple-500/30'}
+          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30 border-2 border-purple-400 animate-glow' 
+          : 'card hover:border-purple-500/30'}
       `}
       whileHover={{ 
         scale: 1.03,
@@ -83,7 +108,7 @@ const CategoryCard = ({ category, totalItems, onClick, isActive }: {
       <motion.div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-3">
-            <span className="text-3xl">{getCategoryEmoji(category.name)}</span>
+            <span className="text-3xl animate-pulse-slow">{getCategoryEmoji(category.name)}</span>
             <h3 className="text-xl font-semibold text-white">{category.name}</h3>
           </div>
           <div className="mt-2 flex items-center text-sm text-gray-300">
@@ -94,7 +119,7 @@ const CategoryCard = ({ category, totalItems, onClick, isActive }: {
         
         <motion.div 
           className={`h-10 w-10 rounded-full flex items-center justify-center
-            ${isActive ? 'bg-white' : 'bg-gray-800'}`}
+            ${isActive ? 'bg-white animate-pulse-slow' : 'bg-gray-800'}`}
           whileHover={{ rotate: 15 }}
         >
           <motion.div
@@ -140,7 +165,7 @@ const CategoryCard = ({ category, totalItems, onClick, isActive }: {
 const ItemCard = ({ item }: { item: Item }) => {
   return (
     <motion.div
-      className="bg-gray-900/70 border border-gray-800 rounded-xl overflow-hidden transition-all hover:border-purple-500/30"
+      className="card group relative overflow-hidden rounded-xl"
       whileHover={{ 
         y: -5,
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
@@ -151,19 +176,21 @@ const ItemCard = ({ item }: { item: Item }) => {
       transition={{ duration: 0.3 }}
       layout
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
       <div className="relative h-48 w-full overflow-hidden">
         {item.imageUrl ? (
           <img 
             src={item.imageUrl} 
             alt={item.name} 
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center">
-            <span className="text-4xl">{item.category.name === 'Electronics' ? '💻' : '📦'}</span>
+            <span className="text-4xl animate-float">{item.category.name === 'Electronics' ? '💻' : '📦'}</span>
           </div>
         )}
-        <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+        <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs px-3 py-1 rounded-full shadow-lg backdrop-blur-sm animate-shine">
           ${item.pricePerDay} / day
         </div>
       </div>
@@ -171,7 +198,7 @@ const ItemCard = ({ item }: { item: Item }) => {
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-medium text-white truncate">{item.name}</h3>
-          <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+          <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full">
             {item.category.name}
           </span>
         </div>
@@ -194,11 +221,17 @@ const ItemCard = ({ item }: { item: Item }) => {
         </div>
         
         <motion.button
-          className="mt-4 w-full py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium transition-all"
+          className="mt-4 w-full py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium transition-all relative overflow-hidden group"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
-          View Details
+          <span className="relative z-10">View Details</span>
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-r from-purple-700 to-blue-700"
+            initial={{ x: "-100%" }}
+            whileHover={{ x: "0%" }}
+            transition={{ duration: 0.3 }}
+          />
         </motion.button>
       </div>
     </motion.div>
@@ -298,48 +331,94 @@ export default function CategoriesPage() {
   };
   
   return (
-    <main className="min-h-screen pt-24 pb-16 px-4 sm:px-6">
+    <main className="min-h-screen pt-24 pb-16 px-4 sm:px-6 relative z-10">
+      {/* Dynamic Background */}
+      <BackgroundParticles />
+      
       {/* Hero Section */}
       <motion.div 
-        className="max-w-7xl mx-auto mb-12 text-center"
+        className="max-w-7xl mx-auto mb-12 text-center relative z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-4">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="inline-block mb-4"
+        >
+          <div className="p-2 px-4 rounded-full bg-purple-500/20 text-purple-300 flex items-center gap-1 text-sm font-medium">
+            <SparklesIcon className="h-4 w-4" />
+            <span>Discover amazing items to rent</span>
+          </div>
+        </motion.div>
+        
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-4 relative">
           Explore All Categories
+          <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 mx-auto w-40 rounded-full"></div>
         </h1>
-        <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+        
+        <motion.p 
+          className="text-xl text-gray-400 max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
           Find anything you need to rent, from electronics to vehicles, all in one place.
-        </p>
+        </motion.p>
       </motion.div>
       
       {/* Search and Filter Section */}
       <div className="max-w-7xl mx-auto mb-8">
-        <div className="bg-gray-900/70 border border-gray-800 rounded-xl p-4 shadow-lg">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" />
+        <motion.div 
+          className="glass-dark border border-purple-500/20 rounded-xl p-4 shadow-lg relative overflow-hidden"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 to-blue-900/10" />
+          
+          <div className="flex flex-col md:flex-row gap-4 relative z-10">
+            <div className="relative flex-grow group">
+              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-purple-400 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search for items..." 
-                className="w-full py-3 pl-10 pr-4 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full py-3 pl-10 pr-4 rounded-lg bg-gray-800/80 border border-gray-700 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              
+              {/* Animated focus effect */}
+              <motion.div 
+                className="absolute inset-0 border border-purple-500 rounded-lg pointer-events-none opacity-0"
+                animate={{ 
+                  opacity: searchQuery ? 0.5 : 0, 
+                  scale: searchQuery ? 1 : 0.95 
+                }}
+                transition={{ duration: 0.2 }}
               />
             </div>
             
             <motion.button 
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg border border-gray-700"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 rounded-lg border border-gray-700 relative overflow-hidden group"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={clearFilters}
             >
-              <AdjustmentsHorizontalIcon className="h-5 w-5" />
+              <AdjustmentsHorizontalIcon className="h-5 w-5 group-hover:rotate-12 transition-transform" />
               <span>Clear Filters</span>
+              
+              <motion.div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"
+                initial={{ scaleX: 0 }}
+                whileHover={{ scaleX: 1 }}
+                transition={{ duration: 0.3 }}
+              />
             </motion.button>
           </div>
-        </div>
+        </motion.div>
       </div>
       
       {/* Main Content */}
@@ -347,13 +426,16 @@ export default function CategoriesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Categories Sidebar */}
           <div className="md:col-span-1">
-            <div className="bg-gray-900/60 rounded-xl border border-gray-800 p-4 sticky top-20">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white">Categories</h2>
+            <div className="glass-dark rounded-xl border border-purple-500/20 p-5 sticky top-20 shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-white flex items-center">
+                  <span className="bg-gradient-to-r from-purple-400 to-blue-500 w-1 h-6 rounded-full mr-2 animate-pulse-slow"></span>
+                  Categories
+                </h2>
                 <motion.button
                   whileHover={{ rotate: 180 }}
                   transition={{ duration: 0.3 }}
-                  className="text-gray-400 hover:text-purple-500"
+                  className="text-gray-400 hover:text-purple-500 bg-gray-800/50 p-2 rounded-full hover:bg-gray-800"
                   onClick={clearFilters}
                 >
                   <ArrowPathIcon className="h-5 w-5" />
@@ -363,7 +445,7 @@ export default function CategoriesPage() {
               {isLoading ? (
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-16 bg-gray-800 animate-pulse rounded-lg"></div>
+                    <div key={i} className="h-16 bg-gray-800/70 animate-pulse rounded-lg"></div>
                   ))}
                 </div>
               ) : (
@@ -371,7 +453,7 @@ export default function CategoriesPage() {
                   <motion.div
                     className={`
                       p-3 rounded-lg cursor-pointer transition-all
-                      ${!selectedCategory ? 'bg-gradient-to-r from-purple-600 to-blue-600' : 'bg-gray-800 hover:bg-gray-700'}
+                      ${!selectedCategory ? 'bg-gradient-to-r from-purple-600 to-blue-600 animate-glow' : 'bg-gray-800/70 hover:bg-gray-700/70'}
                     `}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -382,7 +464,7 @@ export default function CategoriesPage() {
                         <span className="text-lg">🌟</span>
                         <span className="font-medium">All Categories</span>
                       </div>
-                      <span className="text-sm text-gray-400">{items.length}</span>
+                      <span className="text-sm bg-white/20 text-white px-2 py-0.5 rounded-full">{items.length}</span>
                     </div>
                   </motion.div>
                   
@@ -402,13 +484,25 @@ export default function CategoriesPage() {
           
           {/* Items Grid */}
           <div className="md:col-span-3">
-            <div className="bg-gray-900/60 rounded-xl border border-gray-800 p-4">
+            <motion.div 
+              className="glass-dark rounded-xl border border-purple-500/20 p-5 shadow-xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-xl font-semibold text-white flex items-center">
+                  <span className="bg-gradient-to-r from-purple-400 to-blue-500 w-1 h-6 rounded-full mr-2"></span>
                   {selectedCategory ? `${selectedCategory.name} Items` : 'All Items'}
-                  <span className="ml-2 text-sm text-gray-400">
-                    ({filteredItems.length} items)
-                  </span>
+                  <motion.span 
+                    className="ml-2 text-sm px-2 py-0.5 rounded-full bg-gray-800"
+                    key={filteredItems.length}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring" }}
+                  >
+                    {filteredItems.length} items
+                  </motion.span>
                 </h2>
                 
                 <div className="flex gap-2">
@@ -419,13 +513,31 @@ export default function CategoriesPage() {
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-80 bg-gray-800 animate-pulse rounded-lg"></div>
+                    <div key={i} className="h-80 bg-gray-800/50 animate-pulse rounded-lg">
+                      <div className="h-48 bg-gray-700/50 rounded-t-lg" />
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-gray-700/50 rounded w-3/4" />
+                        <div className="h-4 bg-gray-700/50 rounded w-1/2" />
+                        <div className="h-4 bg-gray-700/50 rounded w-2/3" />
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : filteredItems.length > 0 ? (
                 <motion.div 
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
                   layout
+                  variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.1
+                      }
+                    }
+                  }}
+                  initial="hidden"
+                  animate="show"
                 >
                   <AnimatePresence>
                     {filteredItems.map((item) => (
@@ -440,36 +552,42 @@ export default function CategoriesPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <div className="text-center p-8 rounded-lg bg-gray-800/60">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-2xl font-semibold mb-2">No items found</h3>
+                  <div className="text-center p-8 rounded-lg glass-dark border border-gray-800/50 animate-pulse-slow">
+                    <div className="text-6xl mb-4 animate-float">🔍</div>
+                    <h3 className="text-2xl font-semibold mb-2 gradient-text">No items found</h3>
                     <p className="text-gray-400">
                       We couldn't find any items matching your criteria.
                     </p>
                     <motion.button
-                      className="mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium"
+                      className="mt-4 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white font-medium relative overflow-hidden group"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={clearFilters}
                     >
-                      Clear Filters
+                      <span className="relative z-10">Clear Filters</span>
+                      <motion.div 
+                        className="absolute inset-0 bg-white/10"
+                        initial={{ x: "-100%" }}
+                        whileHover={{ x: "0%" }}
+                        transition={{ duration: 0.3 }}
+                      />
                     </motion.button>
                   </div>
                 </motion.div>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
       
       {/* Interactive Panel at bottom */}
       <motion.div 
-        className="fixed bottom-6 left-0 right-0 mx-auto w-full max-w-md px-4"
+        className="fixed bottom-6 left-0 right-0 mx-auto w-full max-w-md px-4 z-20"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
       >
-        <div className="bg-gradient-to-r from-purple-900/90 to-blue-900/90 backdrop-blur-lg p-4 rounded-2xl border border-purple-500/20 shadow-2xl">
+        <div className="bg-gradient-to-r from-purple-900/90 to-blue-900/90 backdrop-blur-xl p-4 rounded-2xl border border-purple-500/30 shadow-2xl animate-glow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-300">Need something specific?</p>
@@ -477,12 +595,19 @@ export default function CategoriesPage() {
             </div>
             <Link href="/search">
               <motion.div
-                className="bg-white text-purple-900 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2"
+                className="bg-white text-purple-900 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 relative overflow-hidden group"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <MagnifyingGlassIcon className="h-4 w-4" />
                 Advanced Search
+                <motion.div 
+                  className="absolute inset-0 bg-purple-100"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "0%" }}
+                  transition={{ duration: 0.3 }}
+                  style={{ zIndex: -1 }}
+                />
               </motion.div>
             </Link>
           </div>

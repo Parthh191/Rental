@@ -149,7 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
 
-      // Updated to use port 3001
       const response = await fetch('http://localhost:3001/api/users/create', {
         method: 'POST',
         headers: {
@@ -161,21 +160,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Signup failed');
+        throw new Error(data.error?.message || 'Failed to create account');
       }
 
-      // Extract user data and token from response
-      const userData: User = data.data;
-      
-      // Store the user data with JWT token
-      if (userData && userData.token) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+      if (!data.data || !data.data.token) {
+        throw new Error('No token received from server');
       }
 
-      // Return the created user data
-      return userData;
-    } catch (error) {
+      // After successful signup, sign in automatically using NextAuth
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      return data.data;
+    } catch (error: any) {
       console.error('Signup error:', error);
       throw error;
     } finally {

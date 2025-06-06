@@ -44,10 +44,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Call your backend API for authentication with better error handling
           console.log('Authenticating with credentials:', { email: credentials.email });
           
-          // Updated to use port 3001 where the backend is running
           const apiUrl = "http://localhost:3001/api/users/login";
           console.log('Sending request to:', apiUrl);
           
@@ -61,7 +59,6 @@ export const authOptions: NextAuthOptions = {
               email: credentials.email,
               password: credentials.password,
             }),
-            // Keep increased timeout
             signal: AbortSignal.timeout(30000), // 30-second timeout
           });
           
@@ -94,7 +91,7 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error("Authentication error:", error);
-          return null;
+          throw error;
         }
       },
     }),
@@ -110,22 +107,20 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        // @ts-ignore - We're adding a custom property
-        token.accessToken = user.token; 
+        token.accessToken = user.token;
       }
       return token;
     },
     async session({ session, token }) {
       // Add the necessary properties from token to session.user
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.name = token.name as string | null;
-        // @ts-ignore - We're adding a custom property
-        session.user.token = token.accessToken as string;
+        session.user.id = token.id;
+        session.user.email = token.email;
+        session.user.name = token.name;
+        session.user.token = token.accessToken;
       }
       return session;
-    },
+    }
   },
   pages: {
     signIn: "/login",
