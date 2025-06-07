@@ -8,8 +8,15 @@ export interface UpdateUserInput {
   email?: string;
   password?: string;
   name?: string;
-  phone?: string;
-  address?: string;
+  phoneCountry?: string;
+  phoneNumber?: string;
+  addressStreet?: string;
+  addressHouseNumber?: string;
+  addressLandmark?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressCountry?: string;
+  addressPostalCode?: string;
   bio?: string;
 }
 
@@ -17,8 +24,16 @@ export interface UserResponse {
   id: number;
   email: string;
   name: string | null;
-  phone: string | null;
-  address: string | null;
+  phoneCountry: string | null;
+  phoneNumber: string | null;
+  addressStreet: string | null;
+  addressHouseNumber: string | null;
+  addressLandmark: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  addressCountry: string | null;
+  addressPostalCode: string | null;
+  bio: string | null;
   createdAt: Date;
   updatedAt: Date;
   token?: string; // JWT token for authenticated sessions

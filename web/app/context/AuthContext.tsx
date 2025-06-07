@@ -52,6 +52,28 @@ export interface User {
   }
 }
 
+export interface AuthUser {
+  id: number;
+  email: string;
+  name: string | null;
+  phoneCountry: string | null;
+  phoneNumber: string | null;
+  addressStreet: string | null;
+  addressHouseNumber: string | null;
+  addressLandmark: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  addressCountry: string | null;
+  addressPostalCode: string | null;
+  bio: string | null;
+  stats?: {
+    itemsListed: number;
+    totalRentals: number;
+    totalReviews: number;
+    averageRating: string;
+  };
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;

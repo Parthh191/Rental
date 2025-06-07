@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
+import { api } from '../utils/api';
 import { 
   UserCircleIcon, 
   Cog6ToothIcon, 
@@ -17,34 +18,6 @@ import {
   PencilIcon
 } from '@heroicons/react/24/outline';
 import { User } from '../context/AuthContext';
-import { api } from '../utils/api';
-
-// Animation variants
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const cardHoverAnimation = {
-  y: -8,
-  scale: 1.02,
-  boxShadow: "0 20px 30px rgba(147, 51, 234, 0.2)",
-  transition: { duration: 0.3, ease: "easeOut" }
-};
-
-const cardTapAnimation = {
-  scale: 0.98,
-  transition: { duration: 0.1 }
-};
 
 interface Rental {
   id: number;
@@ -79,11 +52,67 @@ interface Item {
   location: string | null;
 }
 
+interface ProfileUser {
+  id: number;
+  name: string;
+  email: string;
+  password?: string;
+  phoneCountry?: string;
+  phoneNumber?: string;
+  address?: {
+    street?: string;
+    houseNumber?: string;
+    landmark?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+  };
+  bio?: string;
+  image?: string;
+  stats?: {
+    itemsListed: number;
+    totalRentals: number;
+    totalReviews: number;
+    averageRating: number;
+  };
+  rentals?: Rental[];
+  reviews?: Review[];
+  items?: Item[];
+}
+
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const cardHoverAnimation = {
+  y: -8,
+  scale: 1.02,
+  boxShadow: "0 20px 30px rgba(147, 51, 234, 0.2)",
+  transition: { duration: 0.3, ease: "easeOut" }
+};
+
+const cardTapAnimation = {
+  scale: 0.98,
+  transition: { duration: 0.1 }
+};
+
 export default function ProfilePage() {
   const { user, logout, fetchUserProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
-  const [profileData, setProfileData] = useState<User | null>(null);
+  const [profileData, setProfileData] = useState<ProfileUser | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
@@ -102,10 +131,29 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    phone: '',
-    address: '',
+    phoneCountry: '',
+    phoneNumber: '',
+    address: {
+      street: '',
+      houseNumber: '',
+      landmark: '',
+      city: '',
+      state: '',
+      country: '',
+      postalCode: ''
+    },
     bio: ''
   });
+
+  // Add country data for phone codes
+  const countryPhoneCodes = [
+    { name: 'United States', code: '+1', flag: '🇺🇸' },
+    { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
+    { name: 'India', code: '+91', flag: '🇮🇳' },
+    { name: 'Canada', code: '+1', flag: '🇨🇦' },
+    { name: 'Australia', code: '+61', flag: '🇦🇺' },
+    // Add more countries as needed
+  ];
 
   useEffect(() => {
     // Load user data from the server using JWT token
@@ -131,8 +179,17 @@ export default function ProfilePage() {
     if (profileData) {
       setFormData({
         name: profileData.name || '',
-        phone: profileData.phone || '',
-        address: profileData.address || '',
+        phoneCountry: profileData.phoneCountry || '',
+        phoneNumber: profileData.phoneNumber || '',
+        address: {
+          street: profileData.address?.street || '',
+          houseNumber: profileData.address?.houseNumber || '',
+          landmark: profileData.address?.landmark || '',
+          city: profileData.address?.city || '',
+          state: profileData.address?.state || '',
+          country: profileData.address?.country || '',
+          postalCode: profileData.address?.postalCode || ''
+        },
         bio: profileData.bio || ''
       });
     }
@@ -369,12 +426,24 @@ export default function ProfilePage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name.startsWith('address.')) {
+      const addressField = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [addressField]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmitEdit = async (e: React.FormEvent) => {
@@ -382,12 +451,26 @@ export default function ProfilePage() {
     try {
       const response = await api.users.update(formData);
       if (response.success && response.data) {
-        setProfileData(response.data);
-        formatDataForDisplay(response.data);
+        // Convert flat address fields back to nested structure for profile data
+        const userData = {
+          ...response.data,
+          address: {
+            street: response.data.addressStreet,
+            houseNumber: response.data.addressHouseNumber,
+            landmark: response.data.addressLandmark,
+            city: response.data.addressCity,
+            state: response.data.addressState,
+            country: response.data.addressCountry,
+            postalCode: response.data.addressPostalCode
+          }
+        };
+        setProfileData(userData);
+        formatDataForDisplay(userData);
         setIsEditing(false);
       }
     } catch (error: any) {
       console.error("Failed to update user details:", error);
+      // You might want to add error handling UI here
     }
   };
 
@@ -613,8 +696,8 @@ export default function ProfilePage() {
                     
                     {/* Profile Settings */}
                     <div className="mb-8 p-6 rounded-xl bg-gray-900/50 backdrop-blur-md border border-purple-500/20">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold text-white">Profile Information</h3>
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-2xl font-bold text-white">Profile Information</h3>
                         {!isEditing && (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -627,82 +710,203 @@ export default function ProfilePage() {
                           </motion.button>
                         )}
                       </div>
-                      <form onSubmit={handleSubmitEdit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
-                          <input 
-                            type="text" 
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            disabled={!isEditing}
-                          />
+                      
+                      <form onSubmit={handleSubmitEdit} className="space-y-6">
+                        {/* Basic Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
+                              <input 
+                                type="text" 
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                              <input 
+                                type="email" 
+                                value={user?.email || ''} 
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          {/* Phone Number */}
+                          <div className="space-y-4">
+                            <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                            <div className="flex gap-3">
+                              <div className="relative w-2/5">
+                                <select
+                                  name="phoneCountry"
+                                  value={formData.phoneCountry}
+                                  onChange={handleInputChange}
+                                  disabled={!isEditing}
+                                  className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none"
+                                >
+                                  <option value="">Select Country</option>
+                                  {countryPhoneCodes.map((country) => (
+                                    <option key={country.name} value={country.code}>
+                                      {country.flag} {country.name} ({country.code})
+                                    </option>
+                                  ))}
+                                </select>
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </div>
+                              </div>
+                              <input
+                                type="tel"
+                                name="phoneNumber"
+                                value={formData.phoneNumber}
+                                onChange={handleInputChange}
+                                placeholder="Phone number"
+                                className="w-3/5 px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
-                          <input 
-                            type="email" 
-                            value={user?.email || ''} 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Phone</label>
-                          <input 
-                            type="tel" 
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="Add phone number" 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            disabled={!isEditing}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Location</label>
-                          <input 
-                            type="text" 
-                            name="address"
-                            value={formData.address}
-                            onChange={handleInputChange}
-                            placeholder="Add your location" 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            disabled={!isEditing}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Bio</label>
-                          <textarea 
-                            rows={4}
+
+                        {/* Bio */}
+                        <div className="space-y-4">
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+                          <textarea
                             name="bio"
                             value={formData.bio}
                             onChange={handleInputChange}
-                            placeholder="Tell others about yourself..." 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Tell us about yourself..."
+                            className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 h-32 resize-none"
                             disabled={!isEditing}
                           />
                         </div>
+
+                        {/* Address Information */}
+                        <div className="space-y-4">
+                          <h4 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Address Information</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">House/Flat Number</label>
+                              <input
+                                type="text"
+                                name="address.houseNumber"
+                                value={formData.address.houseNumber}
+                                onChange={handleInputChange}
+                                placeholder="Enter house/flat number"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">Street</label>
+                              <input
+                                type="text"
+                                name="address.street"
+                                value={formData.address.street}
+                                onChange={handleInputChange}
+                                placeholder="Enter street name"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">Landmark</label>
+                              <input
+                                type="text"
+                                name="address.landmark"
+                                value={formData.address.landmark}
+                                onChange={handleInputChange}
+                                placeholder="Enter nearby landmark"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">City</label>
+                              <input
+                                type="text"
+                                name="address.city"
+                                value={formData.address.city}
+                                onChange={handleInputChange}
+                                placeholder="Enter city"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">State</label>
+                              <input
+                                type="text"
+                                name="address.state"
+                                value={formData.address.state}
+                                onChange={handleInputChange}
+                                placeholder="Enter state"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">Country</label>
+                              <input
+                                type="text"
+                                name="address.country"
+                                value={formData.address.country}
+                                onChange={handleInputChange}
+                                placeholder="Enter country"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300 mb-2">Postal Code</label>
+                              <input
+                                type="text"
+                                name="address.postalCode"
+                                value={formData.address.postalCode}
+                                onChange={handleInputChange}
+                                placeholder="Enter postal code"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!isEditing}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
                         {isEditing && (
-                          <div className="md:col-span-2 flex justify-end gap-4">
+                          <div className="flex justify-end gap-4 pt-4 border-t border-gray-700">
                             <motion.button
                               type="button"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => {
                                 setIsEditing(false);
-                                // Reset form data to current profile data
                                 if (profileData) {
                                   setFormData({
                                     name: profileData.name || '',
-                                    phone: profileData.phone || '',
-                                    address: profileData.address || '',
+                                    phoneCountry: profileData.phoneCountry || '',
+                                    phoneNumber: profileData.phoneNumber || '',
+                                    address: {
+                                      street: profileData.address?.street || '',
+                                      houseNumber: profileData.address?.houseNumber || '',
+                                      landmark: profileData.address?.landmark || '',
+                                      city: profileData.address?.city || '',
+                                      state: profileData.address?.state || '',
+                                      country: profileData.address?.country || '',
+                                      postalCode: profileData.address?.postalCode || ''
+                                    },
                                     bio: profileData.bio || ''
                                   });
                                 }
                               }}
-                              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-300"
+                              className="px-6 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-300"
                             >
                               Cancel
                             </motion.button>
@@ -710,7 +914,7 @@ export default function ProfilePage() {
                               type="submit"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300"
+                              className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300"
                             >
                               Save Changes
                             </motion.button>

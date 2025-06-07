@@ -121,43 +121,49 @@ export class UserService {
   }
   async getUser(userId: number): Promise<UserResponse | null> {
     try {
-      // Get user basic info
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true,
           email: true,
           name: true,
-          phone: true,
-          address: true,
+          phoneCountry: true,
+          phoneNumber: true,
+          addressStreet: true,
+          addressHouseNumber: true,
+          addressLandmark: true,
+          addressCity: true,
+          addressState: true,
+          addressCountry: true,
+          addressPostalCode: true,
           bio: true,
           createdAt: true,
           updatedAt: true,
-          rentals: { // Include user's rental history based on actual schema
+          rentals: {
             select: {
               id: true,
               startDate: true,
-              endDate: true, 
+              endDate: true,
               status: true,
               item: {
                 select: {
                   id: true,
-                  name: true, // "name" is used instead of "title" in the schema
-                  imageUrl: true // "imageUrl" is used instead of "image" in the schema
+                  name: true,
+                  imageUrl: true
                 }
               }
             },
             orderBy: {
               createdAt: 'desc'
             },
-            take: 5 // Limit to recent 5 rentals
+            take: 5
           },
-          items: { // Items listed by the user
+          items: {
             select: {
               id: true,
-              name: true, // "name" is used instead of "title" in the schema
-              pricePerDay: true, // "pricePerDay" is used instead of "price" in the schema
-              imageUrl: true, // "imageUrl" is used instead of "image" in the schema
+              name: true,
+              pricePerDay: true,
+              imageUrl: true,
               available: true,
               category: {
                 select: {
@@ -165,56 +171,68 @@ export class UserService {
                 }
               },
               location: true
-            },
-            take: 4 // Limit to 4 items for display
+            }
           },
-          reviews: { // Reviews received by the user
+          reviews: {
             select: {
               id: true,
               rating: true,
               comment: true,
               item: {
                 select: {
-                  name: true // "name" is used instead of "title" in the schema
+                  name: true
                 }
               }
-            },
-            orderBy: {
-              id: 'desc' // No createdAt in review table, using id as proxy
-            },
-            take: 5 // Limit to recent 5 reviews
+            }
+          },
+          _count: {
+            select: {
+              items: true,
+              rentals: true,
+              reviews: true
+            }
           }
         }
       });
 
-      if (!user) {
-        throw createError('User not found', 404);
-      }
-      
-      // Calculate user's average rating
-      let averageRating = 0;
-      if (user.reviews && user.reviews.length > 0) {
-        const totalRating = user.reviews.reduce((sum, review) => sum + review.rating, 0);
-        averageRating = totalRating / user.reviews.length;
-      }
-      
-      // Calculate total items listed and total items rented
-      const stats = {
-        itemsListed: user.items?.length || 0,
-        totalRentals: user.rentals?.length || 0,
-        totalReviews: user.reviews?.length || 0,
-        averageRating: averageRating.toFixed(1)
-      };
-      
+      if (!user) return null;
+
+      // Calculate average rating
+      const reviews = await prisma.review.findMany({
+        where: {
+          userId: userId
+        },
+        select: {
+          rating: true
+        }
+      });
+
+      const averageRating = reviews.length > 0
+        ? (reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length).toFixed(1)
+        : '0.0';
+
+      // Filter out any null categories and map the items
+      const formattedItems = user.items.map(item => ({
+        ...item,
+        category: item.category || { name: 'Uncategorized' }
+      }));
+
       return {
         ...user,
-        stats
-      } as UserResponse;
-    } catch (error: any) {
-      if (error.statusCode) throw error;
-      throw createError('Failed to retrieve user', 500);
+        items: formattedItems,
+        stats: {
+          itemsListed: user._count.items,
+          totalRentals: user._count.rentals,
+          totalReviews: user._count.reviews,
+          averageRating
+        }
+      };
+    } catch (error) {
+      console.error('Error getting user:', error);
+      throw error;
     }
   }
+
   async deleteUser(userId: number): Promise<Boolean|void> {
     try {
       const user = await prisma.user.findUnique({
@@ -307,23 +325,57 @@ export class UserService {
         data: {
           email: data.email || user.email,
           name: data.name || user.name,
-          phone: data?.phone || user.phone,
-          address: data?.address || user.address,
-          bio: data?.bio || user.bio
+          phoneCountry: data.phoneCountry|| user.phoneCountry,
+          phoneNumber: data.phoneNumber|| user.phoneNumber,
+          addressStreet: data.addressStreet|| user.addressStreet,
+          addressHouseNumber: data.addressHouseNumber|| user.addressHouseNumber,
+          addressLandmark: data.addressLandmark|| user.addressLandmark,
+          addressCity: data.addressCity|| user.addressCity,
+          addressState: data.addressState|| user.addressState,
+          addressCountry: data.addressCountry|| user.addressCountry,
+          addressPostalCode: data.addressPostalCode|| user.addressPostalCode,
+          bio: data.bio || user.bio,
         }
       });
 
-      console.log(`User details updated successfully for user ID ${userId}.`);
-      return {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        createdAt: updatedUser.createdAt,
-        updatedAt: updatedUser.updatedAt
-      } as UserResponse;
+      // Get full user data with relationships
+      return await this.getUser(updatedUser.id) as UserResponse;
     } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw createError('Email already exists', 400);
+      }
       if (error.statusCode) throw error;
       throw createError('Failed to update user details', 500);
+    }
+  }
+  async updateUser(userId: number, data: UpdateUserInput): Promise<UserResponse> {
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: data.name,
+          phoneCountry: data.phoneCountry,
+          phoneNumber: data.phoneNumber,
+          addressStreet: data.addressStreet,
+          addressHouseNumber: data.addressHouseNumber,
+          addressLandmark: data.addressLandmark,
+          addressCity: data.addressCity,
+          addressState: data.addressState,
+          addressCountry: data.addressCountry,
+          addressPostalCode: data.addressPostalCode,
+          bio: data.bio,
+          ...(data.email && { email: data.email }),
+          ...(data.password && { password: hashPassword(data.password) })
+        }
+      });
+
+      // Get full user data with relationships
+      return await this.getUser(updatedUser.id) as UserResponse;
+    } catch (error: any) {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
+        throw createError('Email already exists', 400);
+      }
+      throw createError('Failed to update user', 500);
     }
   }
 }

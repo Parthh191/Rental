@@ -35,13 +35,29 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
  * Common API methods for your application
  */
 export const api = {
-  // User related endpoints
   users: {
     getCurrent: () => fetchWithAuth('/users/get'),
-    update: (userData: any) => fetchWithAuth('/users/update', {
-      method: 'PUT',
-      body: JSON.stringify(userData)
-    }),
+    update: async (data: any) => {
+      // Transform nested address into flat structure
+      const flatData = {
+        ...data,
+        addressStreet: data.address?.street,
+        addressHouseNumber: data.address?.houseNumber,
+        addressLandmark: data.address?.landmark,
+        addressCity: data.address?.city,
+        addressState: data.address?.state,
+        addressCountry: data.address?.country,
+        addressPostalCode: data.address?.postalCode
+      };
+      
+      // Remove the nested address object
+      delete flatData.address;
+
+      return fetchWithAuth('/users/update', {
+        method: 'PUT',
+        body: JSON.stringify(flatData),
+      });
+    },
     checkPassword: (password: string) => fetchWithAuth('/users/checkpassword', {
       method: 'POST',
       body: JSON.stringify({ password })
@@ -93,4 +109,102 @@ export const api = {
   },
   
   // Add other API endpoint groups as needed
+};
+
+/**
+ * TypeScript interfaces for API data structures
+ */
+
+export interface User {
+  id: number;
+  email: string;
+  name: string | null;
+  phoneCountry: string | null;
+  phoneNumber: string | null;
+  addressStreet: string | null;
+  addressHouseNumber: string | null;
+  addressLandmark: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  addressCountry: string | null;
+  addressPostalCode: string | null;
+  bio: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  stats?: {
+    itemsListed: number;
+    totalRentals: number;
+    totalReviews: number;
+    averageRating: string;
+  };
+  rentals?: Array<{
+    id: number;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    item: {
+      id: number;
+      name: string;
+      imageUrl: string | null;
+    }
+  }>;
+  items?: Array<{
+    id: number;
+    name: string;
+    pricePerDay: number;
+    imageUrl: string | null;
+    available: boolean;
+    category: {
+      name: string;
+    };
+    location: string | null;
+  }>;
+  reviews?: Array<{
+    id: number;
+    rating: number;
+    comment: string | null;
+    item: {
+      name: string;
+    }
+  }>;
+}
+
+/**
+ * Update user data structure
+ */
+interface UpdateUserData {
+  name?: string;
+  phoneCountry?: string;
+  phoneNumber?: string;
+  addressStreet?: string;
+  addressHouseNumber?: string;
+  addressLandmark?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressCountry?: string;
+  addressPostalCode?: string;
+  bio?: string;
+}
+
+// Update the users object methods
+const users = {
+  getCurrent: () => fetchWithAuth('/users/get'),
+  update: async (data: UpdateUserData) => {
+    const response = await fetchWithAuth('/api/users', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return response;
+  },
+  checkPassword: (password: string) => fetchWithAuth('/users/checkpassword', {
+    method: 'POST',
+    body: JSON.stringify({ password })
+  }),
+  updatePassword: (newPassword: string) => fetchWithAuth('/users/updatepassword', {
+    method: 'POST',
+    body: JSON.stringify({ newPassword })
+  }),
+  delete: () => fetchWithAuth('/users/delete', {
+    method: 'DELETE'
+  })
 };
