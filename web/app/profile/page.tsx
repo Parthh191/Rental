@@ -15,9 +15,7 @@ import {
   StarIcon,
   PlusCircleIcon
 } from '@heroicons/react/24/outline';
-
-// Import User interface from AuthContext
-import type { User } from '../context/AuthContext';
+import { User } from '../context/AuthContext';
 
 // Animation variants
 const fadeInUp = {
@@ -46,16 +44,59 @@ const cardTapAnimation = {
   transition: { duration: 0.1 }
 };
 
+interface Rental {
+  id: number;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  item: {
+    id: number;
+    name: string;
+    imageUrl: string | null;
+  }
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  comment: string | null;
+  item: {
+    name: string;
+  }
+}
+
+interface Item {
+  id: number;
+  name: string;
+  pricePerDay: number;
+  imageUrl: string | null;
+  available: boolean;
+  category: {
+    name: string;
+  };
+  location: string | null;
+}
+
 export default function ProfilePage() {
   const { user, logout, fetchUserProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [profileData, setProfileData] = useState<User | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formattedData, setFormattedData] = useState({
     stats: [] as { label: string; value: string | number; icon: any }[],
     recentActivity: [] as any[],
     listedItems: [] as any[]
   });
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     // Load user data from the server using JWT token
@@ -108,7 +149,7 @@ export default function ProfilePage() {
     
     // Add rentals to activity
     if (userData.rentals && userData.rentals.length > 0) {
-      const rentalActivity = userData.rentals.map(rental => {
+      const rentalActivity = userData.rentals.map((rental: Rental) => {
         // Format dates for display - converting Date strings to actual Date objects
         const startDate = new Date(rental.startDate);
         const endDate = new Date(rental.endDate);
@@ -137,7 +178,7 @@ export default function ProfilePage() {
     
     // Add reviews to activity
     if (userData.reviews && userData.reviews.length > 0) {
-      const reviewActivity = userData.reviews.map(review => {
+      const reviewActivity = userData.reviews.map((review: Review) => {
         // Since Review doesn't have createdAt in our schema, we'll use a placeholder date
         const daysSince = Math.floor(Math.random() * 30); // Random date for display purposes
         
@@ -175,7 +216,7 @@ export default function ProfilePage() {
     // Format listings
     const listings = [];
     if (userData.items && userData.items.length > 0) {
-      const formattedListings = userData.items.map(item => {
+      const formattedListings = userData.items.map((item: Item) => {
         return {
           id: item.id,
           name: item.name, // Using name instead of title as per schema
@@ -210,6 +251,117 @@ export default function ProfilePage() {
       window.location.href = '/';
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteError('');
+      
+      // Verify password first using the checkPassword endpoint
+      const verifyResponse = await fetch('http://localhost:3001/api/users/checkpassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          password: deletePassword
+        }),
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyResponse.ok) {
+        setDeleteError(verifyData.error?.message || 'Incorrect password');
+        setIsDeleting(false);
+        return;
+      }
+
+      // If password is correct, proceed with deletion
+      const deleteResponse = await fetch('http://localhost:3001/api/users/delete', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user?.token}`,
+        },
+      });
+
+      if (!deleteResponse.ok) {
+        const deleteData = await deleteResponse.json();
+        throw new Error(deleteData.error?.message || 'Failed to delete account');
+      }
+
+      // First sign out from NextAuth
+      await signOut({ redirect: false });
+      
+      // Then clear local state with custom logout
+      await logout();
+      
+      // Finally redirect to home page
+      window.location.href = '/';
+    } catch (error: any) {
+      setDeleteError(error.message || 'Failed to delete account. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    try {
+      setPasswordError('');
+      setIsUpdatingPassword(true);
+
+      if (newPassword !== confirmNewPassword) {
+        setPasswordError('New passwords do not match');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        setPasswordError('New password must be at least 6 characters long');
+        return;
+      }
+
+      // Verify current password
+      const verifyResponse = await fetch('http://localhost:3001/api/users/checkpassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ password: currentPassword }),
+      });
+
+      if (!verifyResponse.ok) {
+        setPasswordError('Current password is incorrect');
+        return;
+      }
+
+      // Update password
+      const updateResponse = await fetch('http://localhost:3001/api/users/updatepassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      const updateData = await updateResponse.json();
+
+      if (!updateResponse.ok) {
+        throw new Error(updateData.error?.message || 'Failed to update password');
+      }
+
+      // Reset form and show success
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setShowPasswordForm(false);
+    } catch (error: any) {
+      setPasswordError(error.message || 'Failed to update password');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -491,42 +643,124 @@ export default function ProfilePage() {
                     </div>
                     
                     {/* Security Settings */}
-                    <div className="mb-8 p-6 rounded-xl bg-gray-900/50 backdrop-blur-md border border-purple-500/20">
-                      <h3 className="text-xl font-bold text-white mb-4">Security</h3>
+                    <div className="mb-8 p-6 rounded-xl bg-gradient-to-br from-gray-900/50 via-purple-900/10 to-gray-900/50 backdrop-blur-md border border-purple-500/20 shadow-xl hover:shadow-purple-500/10 transition-all duration-500">
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-4">Security</h3>
                       <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Current Password</label>
-                          <input 
-                            type="password" 
-                            placeholder="Enter current password" 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">New Password</label>
-                          <input 
-                            type="password" 
-                            placeholder="Enter new password" 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-400 mb-1">Confirm New Password</label>
-                          <input 
-                            type="password" 
-                            placeholder="Confirm new password" 
-                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-6 flex justify-end">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300"
-                        >
-                          Update Password
-                        </motion.button>
+                        {!showPasswordForm ? (
+                          <motion.button
+                            whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(147, 51, 234, 0.3)" }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowPasswordForm(true)}
+                            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-purple-500/20 flex items-center gap-2 group"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform group-hover:rotate-12 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                            Change Password
+                          </motion.button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="space-y-4"
+                          >
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-1">Current Password</label>
+                              <motion.div
+                                whileFocus={{ scale: 1.01 }}
+                                className="relative group"
+                              >
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg opacity-20 group-hover:opacity-30 transition duration-300 blur"></div>
+                                <input 
+                                  type="password" 
+                                  value={currentPassword}
+                                  onChange={(e) => setCurrentPassword(e.target.value)}
+                                  placeholder="Enter current password" 
+                                  className="relative w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                                />
+                              </motion.div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-1">New Password</label>
+                              <motion.div
+                                whileFocus={{ scale: 1.01 }}
+                                className="relative group"
+                              >
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg opacity-20 group-hover:opacity-30 transition duration-300 blur"></div>
+                                <input 
+                                  type="password" 
+                                  value={newPassword}
+                                  onChange={(e) => setNewPassword(e.target.value)}
+                                  placeholder="Enter new password" 
+                                  className="relative w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                                />
+                              </motion.div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-400 mb-1">Confirm New Password</label>
+                              <motion.div
+                                whileFocus={{ scale: 1.01 }}
+                                className="relative group"
+                              >
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg opacity-20 group-hover:opacity-30 transition duration-300 blur"></div>
+                                <input 
+                                  type="password" 
+                                  value={confirmNewPassword}
+                                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                  placeholder="Confirm new password" 
+                                  className="relative w-full px-4 py-3 rounded-lg bg-gray-800/90 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                                />
+                              </motion.div>
+                            </div>
+                            {passwordError && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-3 bg-red-500/20 border border-red-500/20 rounded-lg text-red-300 text-sm"
+                              >
+                                {passwordError}
+                              </motion.div>
+                            )}
+                            <div className="flex gap-4 justify-end mt-6">
+                              <motion.button
+                                whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(107, 114, 128, 0.3)" }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => {
+                                  setShowPasswordForm(false);
+                                  setCurrentPassword('');
+                                  setNewPassword('');
+                                  setConfirmNewPassword('');
+                                  setPasswordError('');
+                                }}
+                                className="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-gray-500/20"
+                              >
+                                Cancel
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(147, 51, 234, 0.3)" }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handlePasswordUpdate}
+                                disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-300 shadow-lg hover:shadow-purple-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isUpdatingPassword ? (
+                                  <>
+                                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin" />
+                                    Updating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Update Password
+                                  </>
+                                )}
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
                       </div>
                     </div>
                     
@@ -537,6 +771,7 @@ export default function ProfilePage() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowDeleteModal(true)}
                         className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition duration-300"
                       >
                         Delete Account
@@ -546,6 +781,62 @@ export default function ProfilePage() {
                 )}
               </div>
 
+              {/* Delete Account Modal */}
+              {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-gray-900 p-6 rounded-xl border border-purple-500/20 max-w-md w-full mx-4"
+                  >
+                    <h3 className="text-xl font-bold text-white mb-4">Delete Account</h3>
+                    <p className="text-gray-400 mb-4">This action cannot be undone. Please enter your password to confirm.</p>
+                    
+                    {deleteError && (
+                      <div className="mb-4 p-3 bg-red-500/20 border border-red-500/20 rounded text-red-300 text-sm">
+                        {deleteError}
+                      </div>
+                    )}
+                    
+                    <input
+                      type="password"
+                      placeholder="Enter your password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
+                    />
+                    
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => {
+                          setShowDeleteModal(false);
+                          setDeletePassword('');
+                          setDeleteError('');
+                        }}
+                        className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDeleteAccount}
+                        disabled={!deletePassword || isDeleting}
+                        className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-red-300/20 border-t-red-300 rounded-full animate-spin" />
+                            Deleting...
+                          </>
+                        ) : (
+                          'Delete Account'
+                        )}
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+              
               {/* Mobile logout button */}
               <div className="md:hidden mt-8">
                 <button

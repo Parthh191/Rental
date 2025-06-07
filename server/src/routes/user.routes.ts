@@ -2,7 +2,10 @@ import { Router } from 'express';
 import {
   createUser,
   login,
-  getUser
+  getUser,
+  deleteUser,
+  checkpassword,
+  updatepassword
 } from '../controllers/user.controller';
 import {validateUser} from '../middlewares/user.middlewares';
 const router = Router();
@@ -11,5 +14,8 @@ const router = Router();
 router.post('/create', createUser);
 router.post('/login', login);
 router.get('/get',validateUser,getUser);
+router.delete('/delete',validateUser,deleteUser);
+router.post('/checkpassword', validateUser, checkpassword);
+router.post('/updatepassword', validateUser, updatepassword);
 
 export default router;

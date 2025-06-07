@@ -97,3 +97,138 @@ export const getUser = async (req: Request, res: Response, next: NextFunction): 
     next(error);
   }
 }
+export const deleteUser= async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.userId; // userId is set by validateUser middleware
+    if (!userId) {
+      console.log('User ID not found in request');
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Unauthorized access'
+        }
+      });
+      return;
+    }
+
+    const deleted = await userService.deleteUser(userId);
+    
+    if (!deleted) {
+      console.log('User not found or could not be deleted:', { userId });
+      res.status(404).json({
+        success: false,
+        error: {
+          message: 'User not found or could not be deleted'
+        }
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    next(error);
+  }
+}
+export const checkpassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try{
+    const userId = req.userId; // userId is set by validateUser middleware
+    if (!userId) {
+      console.log('User ID not found in request');
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Unauthorized access'
+        }
+      });
+      return;
+    }
+
+    const { password } = req.body;
+    if (!password) {
+      console.log('Password not provided in request body');
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'Password is required'
+        }
+      });
+      return;
+    }
+
+    const isValid = await userService.checkPassword(userId, password);
+    
+    if (!isValid) {
+      console.log('Invalid password for user:', { userId });
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Invalid password'
+        }
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Password is valid'
+    });
+  }
+  catch (error) {
+    console.error('Check password error:', error);
+    next(error);
+  }
+}
+
+export const updatepassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try{
+    const userId = req.userId; // userId is set by validateUser middleware
+    if (!userId) {
+      console.log('User ID not found in request');
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Unauthorized access'
+        }
+      });
+      return;
+    }
+
+    const  newPassword  = req.body.newPassword;
+    if (!newPassword) {
+      console.log('New password not provided in request body');
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'New password are required'
+        }
+      });
+      return;
+    }
+
+    const updated = await userService.updatePassword(userId, newPassword);
+    
+    if (!updated) {
+      console.log('Failed to update password for user:', { userId });
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'Failed to update password'
+        }
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  }
+  catch (error) {
+    console.error('Update password error:', error);
+    next(error);
+  }
+}

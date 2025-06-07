@@ -5,9 +5,12 @@ import { createError } from '../middlewares/errorHandler';
 import crypto from 'crypto';
 import { generateToken } from '../utils/jwt';
 
-// Function to hash password using SHA-256
+// Use a consistent salt for password hashing
+const SALT = process.env.PASSWORD_SALT || 'defaultSalt123';
+
+// Function to hash password using SHA-256 with salt
 const hashPassword = (password: string): string => {
-  return crypto.createHash('sha256').update(password).digest('hex');
+  return crypto.createHash('sha256').update(password + SALT).digest('hex');
 };
 
 export class UserService {
@@ -207,6 +210,77 @@ export class UserService {
     } catch (error: any) {
       if (error.statusCode) throw error;
       throw createError('Failed to retrieve user', 500);
+    }
+  }
+  async deleteUser(userId: number): Promise<Boolean|void> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw createError('User not found', 404);
+      }
+
+      // Delete user and related data
+      await prisma.user.delete({
+        where: { id: userId }
+      });
+
+      console.log(`User with ID ${userId} deleted successfully.`);
+      return true; // Indicate successful deletion
+    } catch (error: any) {
+      if (error.statusCode) throw error;
+      throw createError('Failed to delete user', 500);
+    }
+  }
+  async checkPassword(userId: number, password: string): Promise<boolean> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw createError('User not found', 404);
+      }
+
+      const hashedPassword = hashPassword(password);
+      return user.password === hashedPassword;
+    } catch (error: any) {
+      if (error.statusCode) throw error;
+      throw createError('Failed to check password', 500);
+    }
+  }
+  async updatePassword(userId: number, newPassword: string): Promise< Boolean> {
+    try{
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw createError('User not found', 404);
+      }
+
+      if (!newPassword) {
+        throw createError('New password is required', 400);
+      }
+
+      // Hash the new password before updating
+      const hashedPassword = hashPassword(newPassword);
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword
+        }
+      });
+
+      console.log(`Password updated successfully for user ID ${userId}.`);
+      return true;
+    }
+    catch (error: any) {
+      if (error.statusCode) throw error;
+      throw createError('Failed to update password', 500);
     }
   }
 }
