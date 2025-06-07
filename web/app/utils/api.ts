@@ -37,11 +37,22 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 export const api = {
   // User related endpoints
   users: {
-    getCurrent: () => fetchWithAuth('/users/me'),
-    update: (userData: any) => fetchWithAuth('/users/me', {
-      method: 'PATCH',
+    getCurrent: () => fetchWithAuth('/users/get'),
+    update: (userData: any) => fetchWithAuth('/users/update', {
+      method: 'PUT',
       body: JSON.stringify(userData)
     }),
+    checkPassword: (password: string) => fetchWithAuth('/users/checkpassword', {
+      method: 'POST',
+      body: JSON.stringify({ password })
+    }),
+    updatePassword: (newPassword: string) => fetchWithAuth('/users/updatepassword', {
+      method: 'POST',
+      body: JSON.stringify({ newPassword })
+    }),
+    delete: () => fetchWithAuth('/users/delete', {
+      method: 'DELETE'
+    })
   },
   
   // Item related endpoints

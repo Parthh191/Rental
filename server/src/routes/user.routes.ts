@@ -5,7 +5,8 @@ import {
   getUser,
   deleteUser,
   checkpassword,
-  updatepassword
+  updatepassword,
+  updatedetails
 } from '../controllers/user.controller';
 import {validateUser} from '../middlewares/user.middlewares';
 const router = Router();
@@ -17,5 +18,6 @@ router.get('/get',validateUser,getUser);
 router.delete('/delete',validateUser,deleteUser);
 router.post('/checkpassword', validateUser, checkpassword);
 router.post('/updatepassword', validateUser, updatepassword);
+router.put('/update', validateUser, updatedetails);
 
 export default router;

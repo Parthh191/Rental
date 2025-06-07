@@ -232,3 +232,54 @@ export const updatepassword = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+
+export const updatedetails=async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try{
+    const userId = req.userId; // userId is set by validateUser middleware
+    if (!userId) {
+      console.log('User ID not found in request');
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Unauthorized access'
+        }
+      });
+      return;
+    }
+
+    const updatedData = req.body;
+    if (!updatedData || Object.keys(updatedData).length === 0) {
+      console.log('No data provided for update');
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'No data provided for update'
+        }
+      });
+      return;
+    }
+
+    const updatedUser = await userService.updateDetails(userId, updatedData);
+    
+    if (!updatedUser) {
+      console.log('Failed to update user details:', { userId });
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'Failed to update user details'
+        }
+      });
+      return;
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: updatedUser,
+      message: 'User details updated successfully'
+    });
+  }
+  catch (error) {
+    console.error('Update details error:', error);
+    next(error);
+  }
+}

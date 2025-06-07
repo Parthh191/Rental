@@ -128,6 +128,9 @@ export class UserService {
           id: true,
           email: true,
           name: true,
+          phone: true,
+          address: true,
+          bio: true,
           createdAt: true,
           updatedAt: true,
           rentals: { // Include user's rental history based on actual schema
@@ -281,6 +284,46 @@ export class UserService {
     catch (error: any) {
       if (error.statusCode) throw error;
       throw createError('Failed to update password', 500);
+    }
+  }
+  async updateDetails(userId: number, data: UpdateUserInput): Promise<UserResponse> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw createError('User not found', 404);
+      }
+
+      // Validate email if provided
+      if (data.email && !isValidEmail(data.email).isValid) {
+        throw createError('Invalid email format', 400);
+      }
+
+      // Update user details
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          email: data.email || user.email,
+          name: data.name || user.name,
+          phone: data?.phone || user.phone,
+          address: data?.address || user.address,
+          bio: data?.bio || user.bio
+        }
+      });
+
+      console.log(`User details updated successfully for user ID ${userId}.`);
+      return {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt
+      } as UserResponse;
+    } catch (error: any) {
+      if (error.statusCode) throw error;
+      throw createError('Failed to update user details', 500);
     }
   }
 }

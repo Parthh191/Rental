@@ -13,9 +13,11 @@ import {
   ArrowRightOnRectangleIcon,
   ChatBubbleLeftRightIcon,
   StarIcon,
-  PlusCircleIcon
+  PlusCircleIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import { User } from '../context/AuthContext';
+import { api } from '../utils/api';
 
 // Animation variants
 const fadeInUp = {
@@ -97,16 +99,23 @@ export default function ProfilePage() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    bio: ''
+  });
 
   useEffect(() => {
     // Load user data from the server using JWT token
     const loadUserProfile = async () => {
       setIsLoading(true);
       try {
-        const userData = await fetchUserProfile();
-        if (userData) {
-          setProfileData(userData);
-          formatDataForDisplay(userData);
+        const response = await api.users.getCurrent();
+        if (response.data) {
+          setProfileData(response.data);
+          formatDataForDisplay(response.data);
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -117,6 +126,17 @@ export default function ProfilePage() {
     
     loadUserProfile();
   }, []); // Empty dependency array to ensure it only runs once
+
+  useEffect(() => {
+    if (profileData) {
+      setFormData({
+        name: profileData.name || '',
+        phone: profileData.phone || '',
+        address: profileData.address || '',
+        bio: profileData.bio || ''
+      });
+    }
+  }, [profileData]);
 
   // Format the user data for display in the UI
   const formatDataForDisplay = (userData: User) => {
@@ -259,37 +279,20 @@ export default function ProfilePage() {
       setIsDeleting(true);
       setDeleteError('');
       
-      // Verify password first using the checkPassword endpoint
-      const verifyResponse = await fetch('http://localhost:3001/api/users/checkpassword', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({
-          password: deletePassword
-        }),
-      });
+      // Verify password first
+      const verifyResponse = await api.users.checkPassword(deletePassword);
 
-      const verifyData = await verifyResponse.json();
-
-      if (!verifyResponse.ok) {
-        setDeleteError(verifyData.error?.message || 'Incorrect password');
+      if (!verifyResponse.success) {
+        setDeleteError('Incorrect password');
         setIsDeleting(false);
         return;
       }
 
       // If password is correct, proceed with deletion
-      const deleteResponse = await fetch('http://localhost:3001/api/users/delete', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-        },
-      });
+      const deleteResponse = await api.users.delete();
 
-      if (!deleteResponse.ok) {
-        const deleteData = await deleteResponse.json();
-        throw new Error(deleteData.error?.message || 'Failed to delete account');
+      if (!deleteResponse.success) {
+        throw new Error('Failed to delete account');
       }
 
       // First sign out from NextAuth
@@ -323,34 +326,18 @@ export default function ProfilePage() {
       }
 
       // Verify current password
-      const verifyResponse = await fetch('http://localhost:3001/api/users/checkpassword', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({ password: currentPassword }),
-      });
+      const checkResponse = await api.users.checkPassword(currentPassword);
 
-      if (!verifyResponse.ok) {
+      if (!checkResponse.success) {
         setPasswordError('Current password is incorrect');
         return;
       }
 
       // Update password
-      const updateResponse = await fetch('http://localhost:3001/api/users/updatepassword', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`,
-        },
-        body: JSON.stringify({ newPassword }),
-      });
+      const updateResponse = await api.users.updatePassword(newPassword);
 
-      const updateData = await updateResponse.json();
-
-      if (!updateResponse.ok) {
-        throw new Error(updateData.error?.message || 'Failed to update password');
+      if (!updateResponse.success) {
+        throw new Error('Failed to update password');
       }
 
       // Reset form and show success
@@ -358,10 +345,49 @@ export default function ProfilePage() {
       setNewPassword('');
       setConfirmNewPassword('');
       setShowPasswordForm(false);
+      
+      // Optional: Show success message
+      // You might want to add a state for success messages
     } catch (error: any) {
       setPasswordError(error.message || 'Failed to update password');
     } finally {
       setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleUpdateUserDetails = async (formData: any) => {
+    try {
+      const response = await api.users.update(formData);
+      if (response.success && response.data) {
+        // Update local state with new user data
+        setProfileData(response.data);
+        formatDataForDisplay(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to update user details:", error);
+      // You might want to add error handling UI here
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await api.users.update(formData);
+      if (response.success && response.data) {
+        setProfileData(response.data);
+        formatDataForDisplay(response.data);
+        setIsEditing(false);
+      }
+    } catch (error: any) {
+      console.error("Failed to update user details:", error);
     }
   };
 
@@ -587,21 +613,37 @@ export default function ProfilePage() {
                     
                     {/* Profile Settings */}
                     <div className="mb-8 p-6 rounded-xl bg-gray-900/50 backdrop-blur-md border border-purple-500/20">
-                      <h3 className="text-xl font-bold text-white mb-4">Profile Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-bold text-white">Profile Information</h3>
+                        {!isEditing && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsEditing(true)}
+                            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300 flex items-center gap-2"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                            Edit Profile
+                          </motion.button>
+                        )}
+                      </div>
+                      <form onSubmit={handleSubmitEdit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
                           <input 
                             type="text" 
-                            defaultValue={user?.name || ''} 
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                             className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            disabled={!isEditing}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
                           <input 
                             type="email" 
-                            defaultValue={user?.email || ''} 
+                            value={user?.email || ''} 
                             className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                             disabled
                           />
@@ -610,36 +652,71 @@ export default function ProfilePage() {
                           <label className="block text-sm font-medium text-gray-400 mb-1">Phone</label>
                           <input 
                             type="tel" 
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
                             placeholder="Add phone number" 
                             className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            disabled={!isEditing}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-400 mb-1">Location</label>
                           <input 
                             type="text" 
+                            name="address"
+                            value={formData.address}
+                            onChange={handleInputChange}
                             placeholder="Add your location" 
                             className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            disabled={!isEditing}
                           />
                         </div>
-                      </div>
-                      <div className="mt-6">
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Bio</label>
-                        <textarea 
-                          rows={4}
-                          placeholder="Tell others about yourself..." 
-                          className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                      </div>
-                      <div className="mt-6 flex justify-end">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300"
-                        >
-                          Save Changes
-                        </motion.button>
-                      </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-400 mb-1">Bio</label>
+                          <textarea 
+                            rows={4}
+                            name="bio"
+                            value={formData.bio}
+                            onChange={handleInputChange}
+                            placeholder="Tell others about yourself..." 
+                            className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        {isEditing && (
+                          <div className="md:col-span-2 flex justify-end gap-4">
+                            <motion.button
+                              type="button"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                setIsEditing(false);
+                                // Reset form data to current profile data
+                                if (profileData) {
+                                  setFormData({
+                                    name: profileData.name || '',
+                                    phone: profileData.phone || '',
+                                    address: profileData.address || '',
+                                    bio: profileData.bio || ''
+                                  });
+                                }
+                              }}
+                              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-300"
+                            >
+                              Cancel
+                            </motion.button>
+                            <motion.button
+                              type="submit"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300"
+                            >
+                              Save Changes
+                            </motion.button>
+                          </div>
+                        )}
+                      </form>
                     </div>
                     
                     {/* Security Settings */}

@@ -8,12 +8,17 @@ export interface UpdateUserInput {
   email?: string;
   password?: string;
   name?: string;
+  phone?: string;
+  address?: string;
+  bio?: string;
 }
 
 export interface UserResponse {
   id: number;
   email: string;
   name: string | null;
+  phone: string | null;
+  address: string | null;
   createdAt: Date;
   updatedAt: Date;
   token?: string; // JWT token for authenticated sessions

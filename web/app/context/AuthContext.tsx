@@ -8,6 +8,9 @@ export interface User {
   id: number;
   email: string;
   name: string | null;
+  phone: string | null;
+  address: string | null;
+  bio: string | null;
   token: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -72,6 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: parseInt(session.user.id || '0'),
         email: session.user.email || '',
         name: session.user.name || null,
+        phone: null,
+        address: null,
+        bio: null,
         token: session.user.token || ''
       };
       setUser(sessionUser);
