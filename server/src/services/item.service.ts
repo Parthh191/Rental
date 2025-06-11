@@ -353,4 +353,42 @@ export class ItemService {
       throw createError('Failed to delete item', 500);
     }
   }
+
+  async getItemById(id: number): Promise<ItemResponse | null> {
+    try {
+      if (!id || isNaN(id)) {
+        throw createError('Valid item ID is required', 400);
+      }
+
+      const item = await prisma.item.findUnique({
+        where: { id },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      if (!item) {
+        throw createError('Item not found', 404);
+      }
+
+      return item;
+    } catch (error: any) {
+      console.error('Error fetching item by ID:', error);
+      
+      if (error.statusCode) throw error;
+      throw createError('Failed to fetch item by ID', 500);
+    }
+  }
 }

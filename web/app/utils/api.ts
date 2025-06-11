@@ -1,5 +1,6 @@
 'use client';
 
+import { get } from 'http';
 import { getSession } from 'next-auth/react';
 
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -11,9 +12,20 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   const session = await getSession();
   const token = session?.user?.token;
   
+  if (!token) {
+    // Clear any remaining token data
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user-token'); // Clear any backup token storage
+      sessionStorage.removeItem('user-token'); // Clear any session storage
+      const { signOut } = await import('next-auth/react');
+      await signOut({ redirect: true, callbackUrl: '/login' });
+    }
+    throw new Error('No authentication token available');
+  }
+
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    'Authorization': `Bearer ${token}`,
     ...(options.headers || {})
   };
   
@@ -22,6 +34,20 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
     headers
   });
   
+  if (response.status === 401) {
+    // Token has expired or is invalid - clear all token storage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user-token');
+      sessionStorage.removeItem('user-token');
+      const { signOut } = await import('next-auth/react');
+      await signOut({ 
+        redirect: true, 
+        callbackUrl: '/login?expired=true' // Add query param to show expired message
+      });
+    }
+    throw new Error('Session expired. Please login again.');
+  }
+
   const data = await response.json();
   
   if (!response.ok) {
@@ -36,9 +62,28 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
  */
 export const api = {
   users: {
-    getCurrent: () => fetchWithAuth('/users/get'),
+    getCurrent: async () => {
+      const response = await fetchWithAuth('/users/get');
+      if (response.success && response.data) {
+        // Transform flat address fields into nested structure for frontend use
+        const transformedData = {
+          ...response.data,
+          address: {
+            street: response.data.addressStreet,
+            houseNumber: response.data.addressHouseNumber,
+            landmark: response.data.addressLandmark,
+            city: response.data.addressCity,
+            state: response.data.addressState,
+            country: response.data.addressCountry,
+            postalCode: response.data.addressPostalCode
+          }
+        };
+        return { success: true, data: transformedData };
+      }
+      return response;
+    },
     update: async (data: any) => {
-      // Transform nested address into flat structure
+      // Transform nested address into flat structure for backend
       const flatData = {
         ...data,
         addressStreet: data.address?.street,
@@ -53,10 +98,28 @@ export const api = {
       // Remove the nested address object
       delete flatData.address;
 
-      return fetchWithAuth('/users/update', {
+      const response = await fetchWithAuth('/users/update', {
         method: 'PUT',
         body: JSON.stringify(flatData),
       });
+
+      if (response.success && response.data) {
+        // Transform the response data back to nested structure
+        const transformedData = {
+          ...response.data,
+          address: {
+            street: response.data.addressStreet,
+            houseNumber: response.data.addressHouseNumber,
+            landmark: response.data.addressLandmark,
+            city: response.data.addressCity,
+            state: response.data.addressState,
+            country: response.data.addressCountry,
+            postalCode: response.data.addressPostalCode
+          }
+        };
+        return { success: true, data: transformedData };
+      }
+      return response;
     },
     checkPassword: (password: string) => fetchWithAuth('/users/checkpassword', {
       method: 'POST',
@@ -89,6 +152,10 @@ export const api = {
     delete: (id: string | number) => fetchWithAuth(`/items/${id}`, {
       method: 'DELETE'
     }),
+    getByCategory: (categoryName: string, params?: URLSearchParams) => {
+      const queryString = params ? `?${params.toString()}` : '';
+      return fetchWithAuth(`/items/category/${categoryName}${queryString}`);
+    }
   },
   
   // Rental related endpoints

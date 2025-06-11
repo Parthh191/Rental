@@ -215,10 +215,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    signOut({ redirect: false });
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      // First clear the local state
+      setUser(null);
+      localStorage.removeItem('user');
+      
+      // Then sign out from NextAuth
+      await signOut({ redirect: false });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, ensure user state is cleared
+      setUser(null);
+      localStorage.removeItem('user');
+    }
   };
 
   return (
