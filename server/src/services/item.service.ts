@@ -391,4 +391,31 @@ export class ItemService {
       throw createError('Failed to fetch item by ID', 500);
     }
   }
+  async getItemByOwnerId(ownerId: number): Promise<ItemResponse[]> {
+    try {
+      const items = await prisma.item.findMany({
+        where: { ownerId },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      return items;
+    } catch (error: any) {
+      console.error('Error fetching items by owner ID:', error);
+      throw createError('Failed to fetch items by owner ID', 500);
+    }
+  }
 }

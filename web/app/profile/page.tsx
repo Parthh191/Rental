@@ -17,6 +17,7 @@ import {
   PlusCircleIcon,
   PencilIcon
 } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 import { User } from '../context/AuthContext';
 
 interface Rental {
@@ -297,10 +298,10 @@ export default function ProfilePage() {
       const formattedListings = userData.items.map((item: Item) => {
         return {
           id: item.id,
-          name: item.name, // Using name instead of title as per schema
+          name: item.name,
           category: item.category.name,
-          price: `$${item.pricePerDay}/day`, // Using pricePerDay instead of price as per schema
-          image: item.imageUrl || '📸', // Using imageUrl instead of image as per schema
+          price: `$${item.pricePerDay}/day`,
+          image: item.imageUrl || '/images/placeholder-item.png', // Add fallback image
           location: item.location || 'No location specified',
           available: item.available
         };
@@ -687,6 +688,14 @@ export default function ProfilePage() {
                       </div>
                     )}
 
+                    {/* Placeholder for other tabs */}
+                    {(activeTab === 'rentals' || activeTab === 'favorites' || activeTab === 'messages') && (
+                      <div className="text-center py-12">
+                        <h2 className="text-2xl font-bold text-white mb-4 capitalize">{activeTab}</h2>
+                        <p className="text-gray-400">This section is coming soon.</p>
+                      </div>
+                    )}
+
                     {activeTab === 'listings' && (
                       <div>
                         <div className="flex justify-between items-center mb-4">
@@ -711,7 +720,15 @@ export default function ProfilePage() {
                               whileHover={cardHoverAnimation}
                               whileTap={cardTapAnimation}
                             >
-                              <div className="text-4xl mb-4">{item.image}</div>
+                              <div className="mb-4 relative w-full h-48 rounded-lg overflow-hidden">
+                                <Image
+                                  src={item.image}
+                                  alt={item.name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                />
+                              </div>
                               <h3 className="text-white font-medium mb-2">{item.name}</h3>
                               <p className="text-gray-400 text-sm mb-2">{item.category}</p>
                               <p className="text-purple-400 font-semibold mb-4">{item.price}</p>
@@ -722,14 +739,6 @@ export default function ProfilePage() {
                             </motion.div>
                           ))}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Placeholder for other tabs */}
-                    {(activeTab === 'rentals' || activeTab === 'favorites' || activeTab === 'messages') && (
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold text-white mb-4 capitalize">{activeTab}</h2>
-                        <p className="text-gray-400">This section is coming soon.</p>
                       </div>
                     )}
 

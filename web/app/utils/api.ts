@@ -141,21 +141,22 @@ export const api = {
       return fetchWithAuth(`/items${queryString}`);
     },
     getById: (id: string | number) => fetchWithAuth(`/items/${id}`),
-    create: (itemData: any) => fetchWithAuth('/items', {
+    create: (itemData: any) => fetchWithAuth('/items/create', {
       method: 'POST',
       body: JSON.stringify(itemData)
     }),
-    update: (id: string | number, itemData: any) => fetchWithAuth(`/items/${id}`, {
-      method: 'PATCH',
+    update: (id: string | number, itemData: any) => fetchWithAuth(`/items/update/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(itemData)
     }),
-    delete: (id: string | number) => fetchWithAuth(`/items/${id}`, {
+    delete: (id: string | number) => fetchWithAuth(`/items/delete/${id}`, {
       method: 'DELETE'
     }),
     getByCategory: (categoryName: string, params?: URLSearchParams) => {
       const queryString = params ? `?${params.toString()}` : '';
       return fetchWithAuth(`/items/category/${categoryName}${queryString}`);
-    }
+    },
+    getByOwner: () => fetchWithAuth('/items/getitembyowner')
   },
   
   // Rental related endpoints

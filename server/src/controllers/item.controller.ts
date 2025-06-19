@@ -201,3 +201,25 @@ export const getItemById=async (req: Request, res: Response, next: NextFunction)
     next(error);
   }
 };
+export const getItemByOwner = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: { message: 'Authentication required' }
+      });
+      return;
+    }
+    
+    const ownerId = req.userId;
+    const items = await itemService.getItemByOwnerId(ownerId);
+    
+    res.status(200).json({
+      success: true,
+      data: items,
+      message: items.length ? 'Items retrieved successfully' : 'No items found'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
