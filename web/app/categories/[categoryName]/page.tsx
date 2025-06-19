@@ -36,72 +36,82 @@ const BackgroundGradient = () => (
 );
 
 // Item card component
-const ItemCard = ({ item }: { item: Item }) => (
-  <motion.div
-    className="group relative"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -8, scale: 1.02 }}
-    transition={{ duration: 0.2 }}
-  >
-    <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition duration-700"></div>
-    <div className="relative bg-[#1a1a1a]/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.3)] group-hover:shadow-[0_8px_30px_rgba(168,85,247,0.3)] border border-gray-800/50 hover:border-purple-500/50 transition-all duration-300">
-      {item.imageUrl && (
-        <div className="relative h-48 overflow-hidden">
-          <img
-            src={item.imageUrl}
-            alt={item.name}
-            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+const ItemCard = ({ item }: { item: Item }) => {
+  const router = useRouter();
+
+  return (
+    <motion.div
+      className="group relative"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+      onClick={() => router.push(`/items/${item.id}`)}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition duration-700"></div>
+      <div className="relative bg-[#1a1a1a]/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.3)] group-hover:shadow-[0_8px_30px_rgba(168,85,247,0.3)] border border-gray-800/50 hover:border-purple-500/50 transition-all duration-300">
+        {item.imageUrl && (
+          <div className="relative h-48 overflow-hidden">
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+            
+            <div className="absolute top-4 right-4">
+              <motion.div whileHover={{ scale: 1.1 }} className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-sm opacity-70"></div>
+                <div className="relative px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.3)] font-medium backdrop-blur-sm">
+                  ${item.pricePerDay}/day
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+        
+        <div className="p-6 bg-gradient-to-b from-[#1a1a1a]/0 to-[#1a1a1a]/100">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors duration-300 mb-2">
+              {item.name}
+            </h2>
+            <span className="text-sm text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full inline-block shadow-inner">
+              {item.category.name}
+            </span>
+          </div>
           
-          <div className="absolute top-4 right-4">
-            <motion.div whileHover={{ scale: 1.1 }} className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-sm opacity-70"></div>
-              <div className="relative px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.3)] font-medium backdrop-blur-sm">
-                ${item.pricePerDay}/day
-              </div>
-            </motion.div>
-          </div>
+          <p className="text-gray-400 mb-6 line-clamp-2">
+            {item.description}
+          </p>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative w-full group/btn"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering parent onClick
+              router.push(`/items/${item.id}`);
+            }}
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg blur-sm opacity-70 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg transition-all duration-300 font-medium flex items-center justify-center gap-2">
+              <span>Rent Now</span>
+              <svg 
+                className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </div>
+          </motion.button>
         </div>
-      )}
-      
-      <div className="p-6 bg-gradient-to-b from-[#1a1a1a]/0 to-[#1a1a1a]/100">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors duration-300 mb-2">
-            {item.name}
-          </h2>
-          <span className="text-sm text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full inline-block shadow-inner">
-            {item.category.name}
-          </span>
-        </div>
-        
-        <p className="text-gray-400 mb-6 line-clamp-2">
-          {item.description}
-        </p>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative w-full group/btn"
-        >
-          <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg blur-sm opacity-70 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg transition-all duration-300 font-medium flex items-center justify-center gap-2">
-            <span>Rent Now</span>
-            <svg 
-              className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </div>
-        </motion.button>
       </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 export default function CategoryItemsPage() {
   const params = useParams();

@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import ParticlesBackground from './components/Particles';
 
 const fadeInUp = {
@@ -46,6 +47,7 @@ const cardTapAnimation = {
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress);
+  const router = useRouter();
 
   // Sections data
   const categories = [
@@ -113,6 +115,7 @@ export default function Home() {
               whileHover={buttonHoverAnimation}
               whileTap={buttonTapAnimation}
               className="px-8 py-4 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition-colors cursor-pointer"
+              onClick={() => router.push('/items')}
             >
               Browse Items
             </motion.button>
