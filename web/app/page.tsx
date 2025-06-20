@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ParticlesBackground from './components/Particles';
 import { api } from '../app/utils/api';  // Update import path
+import { useAuth } from './context/AuthContext'; // Fixed import path
 
 // Animation types
 const buttonHoverAnimation = {
@@ -43,14 +44,28 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress);
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
+  // If still loading or user is not authenticated, don't render the page content
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setIsLoading(true);
         const response = await api.items.getAll();
         
         if (response && response.data) {
@@ -68,8 +83,6 @@ export default function Home() {
       } catch (err) {
         setError('Failed to load categories');
         console.error('Error fetching categories:', err);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -193,48 +206,33 @@ export default function Home() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {isLoading ? (
-              // Loading skeletons
-              [...Array(6)].map((_, index) => (
-                <div 
-                  key={index}
-                  className="group relative overflow-hidden p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10 animate-pulse"
-                  aria-hidden="true"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gray-800 mb-4"></div>
-                  <div className="h-6 bg-gray-800 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-800 rounded w-1/2"></div>
+            {categories.map((category) => (
+              <motion.div
+                key={category.id}
+                className="group relative overflow-hidden p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10 hover:border-purple-500/30 transition-all cursor-pointer"
+                whileHover={cardHoverAnimation}
+                whileTap={cardTapAnimation}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                onClick={() => router.push(`/categories/${encodeURIComponent(category.name.toLowerCase())}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/categories/${encodeURIComponent(category.name.toLowerCase())}`);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Browse ${category.name} category`}
+              >
+                <div className="text-3xl mb-4" aria-hidden="true">
+                  {getCategoryEmoji(category.name)}
                 </div>
-              ))
-            ) : (
-              categories.map((category) => (
-                <motion.div
-                  key={category.id}
-                  className="group relative overflow-hidden p-6 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/10 hover:border-purple-500/30 transition-all cursor-pointer"
-                  whileHover={cardHoverAnimation}
-                  whileTap={cardTapAnimation}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  onClick={() => router.push(`/categories/${encodeURIComponent(category.name.toLowerCase())}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      router.push(`/categories/${encodeURIComponent(category.name.toLowerCase())}`);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Browse ${category.name} category`}
-                >
-                  <div className="text-3xl mb-4" aria-hidden="true">
-                    {getCategoryEmoji(category.name)}
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">{category.name}</h3>
-                  <p className="text-gray-400">Browse {category.name}</p>
-                </motion.div>
-              ))
-            )}
+                <h3 className="text-xl font-semibold text-white mb-2">{category.name}</h3>
+                <p className="text-gray-400">Browse {category.name}</p>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
       </section>
