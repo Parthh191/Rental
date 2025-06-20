@@ -129,8 +129,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ newPassword })
     }),
-    delete: () => fetchWithAuth('/users/delete', {
-      method: 'DELETE'
+    delete: (password: string) => fetchWithAuth('/users/delete', {
+      method: 'DELETE',
+      body: JSON.stringify({ password })
     })
   },
   
@@ -272,7 +273,8 @@ const users = {
     method: 'POST',
     body: JSON.stringify({ newPassword })
   }),
-  delete: () => fetchWithAuth('/users/delete', {
-    method: 'DELETE'
+  delete: (password: string) => fetchWithAuth('/users/delete', {
+    method: 'DELETE',
+    body: JSON.stringify({ password })
   })
 };

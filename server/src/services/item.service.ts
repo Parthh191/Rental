@@ -282,10 +282,6 @@ export class ItemService {
         }
       });
 
-      if (items.length === 0) {
-        throw createError('No items found', 404);
-      }
-
       return items;
     } catch (error: any) {
       console.error('Error fetching all items:', error);

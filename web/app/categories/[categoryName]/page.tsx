@@ -149,6 +149,7 @@ export default function CategoryItemsPage() {
     }
   }, [categoryName, status, router]);
 
+  // Filter items based on search query
   const filteredItems = items.filter(item =>
     searchQuery
       ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -171,15 +172,13 @@ export default function CategoryItemsPage() {
               {/* Capitalize first letter for display */}
               {decodeURIComponent(categoryName).charAt(0).toUpperCase() + decodeURIComponent(categoryName).slice(1)}
             </h1>
-            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
-              Browse available items in {decodeURIComponent(categoryName)}
+            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+              Browse all available items in this category
             </p>
-          </div>
 
-          <div className="max-w-2xl mx-auto mb-12">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-xl blur-xl group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt opacity-0 group-hover:opacity-100"></div>
-              <div className="relative">
+            {/* Search Input */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative group">
                 <MagnifyingGlassIcon className="h-5 w-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-purple-400 transition-colors" />
                 <input 
                   type="text" 
@@ -195,14 +194,21 @@ export default function CategoryItemsPage() {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-80 bg-gray-800/50 animate-pulse rounded-lg">
-                  <div className="h-48 bg-gray-700/50 rounded-t-lg" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-4 bg-gray-700/50 rounded w-3/4" />
-                    <div className="h-4 bg-gray-700/50 rounded w-1/2" />
-                    <div className="h-4 bg-gray-700/50 rounded w-2/3" />
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 animate-pulse"
+                >
+                  <div className="h-48 bg-gray-800/50"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-6 bg-gray-800/50 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-800/50 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-800/50 rounded w-2/3"></div>
+                    <div className="h-4 bg-gray-800/50 rounded w-1/4"></div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : filteredItems.length > 0 ? (

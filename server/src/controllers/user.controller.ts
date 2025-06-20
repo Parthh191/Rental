@@ -99,13 +99,38 @@ export const getUser = async (req: Request, res: Response, next: NextFunction): 
 }
 export const deleteUser= async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = req.userId; // userId is set by validateUser middleware
+    const userId = req.userId;
     if (!userId) {
       console.log('User ID not found in request');
       res.status(401).json({
         success: false,
         error: {
           message: 'Unauthorized access'
+        }
+      });
+      return;
+    }
+
+    const { password } = req.body;
+    if (!password) {
+      console.log('Password not provided in request body');
+      res.status(400).json({
+        success: false,
+        error: {
+          message: 'Password is required'
+        }
+      });
+      return;
+    }
+
+    // First verify the password
+    const userService = new UserService();
+    const isPasswordValid = await userService.checkPassword(userId, password);
+    if (!isPasswordValid) {
+      res.status(401).json({
+        success: false,
+        error: {
+          message: 'Invalid password'
         }
       });
       return;

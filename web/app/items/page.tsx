@@ -81,19 +81,34 @@ export default function ItemsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-purple-500/10 p-4 animate-pulse">
-                <div className="h-48 bg-gray-700 rounded-md mb-4"/>
-                <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"/>
-                <div className="h-4 bg-gray-700 rounded w-1/2"/>
+      <div className="min-h-screen pt-16 bg-[#0a0a0a] overflow-hidden">
+    <div className="container mx-auto px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-[#1a1a1a]/90 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 animate-pulse"
+            >
+              <div className="relative h-48 bg-gray-800"></div>
+              <div className="p-6 space-y-4">
+                <div className="h-4 bg-gray-800 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-800 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-800 rounded w-2/3"></div>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+    </div>
+  </div>
     );
   }
 

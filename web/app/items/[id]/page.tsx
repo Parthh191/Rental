@@ -76,14 +76,42 @@ export default function ItemDetailsPage() {
       <main className="min-h-screen pt-16 relative overflow-hidden bg-[#0a0a0a]">
         <BackgroundGradient />
         <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-64 bg-gray-800/50 rounded-lg mb-8"></div>
-            <div className="space-y-4">
-              <div className="h-8 bg-gray-800/50 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-800/50 rounded w-1/2"></div>
-              <div className="h-4 bg-gray-800/50 rounded w-2/3"></div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          >
+            {/* Image Section Loading Skeleton */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-xl blur-xl opacity-75"></div>
+              <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-900 animate-pulse">
+                <div className="absolute inset-0 bg-gray-800"></div>
+              </div>
             </div>
-          </div>
+
+            {/* Content Section Loading Skeleton */}
+            <div className="space-y-6">
+              <div className="h-8 bg-gray-800 rounded-lg w-3/4 animate-pulse"></div>
+              <div className="h-4 bg-gray-800 rounded w-1/2 animate-pulse"></div>
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-4 bg-gray-800 rounded w-full animate-pulse"></div>
+                ))}
+              </div>
+              <div className="space-y-4 mt-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-2">
+                    <div className="h-5 w-5 rounded-full bg-gray-800 animate-pulse"></div>
+                    <div className="h-4 bg-gray-800 rounded w-1/3 animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-8">
+                <div className="h-12 bg-gray-800 rounded-lg w-full animate-pulse"></div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </main>
     );

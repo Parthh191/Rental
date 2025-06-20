@@ -243,14 +243,34 @@ export class UserService {
         throw createError('User not found', 404);
       }
 
-      // Delete user and related data
+      // Delete all related data in the correct order
+      // First delete reviews since they reference rentals
+      await prisma.review.deleteMany({
+        where: { userId: userId }
+      });
+
+      // Delete rentals
+      await prisma.rental.deleteMany({
+        where: { userId: userId }
+      });
+
+      // Delete items
+      await prisma.item.deleteMany({
+        where: { ownerId: userId }
+      });
+
+      // Finally delete the user
       await prisma.user.delete({
         where: { id: userId }
       });
 
-      console.log(`User with ID ${userId} deleted successfully.`);
-      return true; // Indicate successful deletion
+      console.log(`User with ID ${userId} and all related data deleted successfully.`);
+      return true;
     } catch (error: any) {
+      console.error('Error deleting user:', error);
+      if (error.code === 'P2003') {
+        throw createError('Cannot delete user due to existing related records', 400);
+      }
       if (error.statusCode) throw error;
       throw createError('Failed to delete user', 500);
     }

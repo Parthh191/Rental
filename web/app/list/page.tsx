@@ -23,6 +23,7 @@ export default function ListItemPage() {
   const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -38,6 +39,7 @@ export default function ListItemPage() {
 
   const fetchUserItems = async () => {
     try {
+      setIsLoading(true);
       const response = await api.items.getByOwner();
       if (response.success) {
         setItems(response.data || []);
@@ -45,6 +47,8 @@ export default function ListItemPage() {
     } catch (error) {
       console.error('Error fetching items:', error);
       setItems([]); // Set empty array on error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -106,7 +110,7 @@ export default function ListItemPage() {
   };
 
   const handleEdit = (itemId: number) => {
-    router.push(`/items/${itemId}`);
+    router.push(`/items/${itemId}/edit`);
   };
 
   return (
@@ -290,7 +294,34 @@ export default function ListItemPage() {
             Your Listed Items
           </h2>
           
-          {items.length === 0 ? (
+          {isLoading ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {[...Array(6)].map((_, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-800 animate-pulse"
+                >
+                  <div className="h-48 bg-gray-800"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="h-4 bg-gray-800 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-800 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-800 rounded w-2/3"></div>
+                    <div className="pt-4 border-t border-gray-800 flex justify-between items-center">
+                      <div className="h-4 bg-gray-800 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-800 rounded w-1/4"></div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : items.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
