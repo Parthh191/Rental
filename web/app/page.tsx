@@ -4,7 +4,6 @@ import { motion, useScroll, useSpring } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ParticlesBackground from './components/Particles';
-import { api } from '../app/utils/api';  // Update import path
 import { useAuth } from './context/AuthContext'; // Fixed import path
 
 // Animation types
@@ -44,50 +43,10 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress);
   const router = useRouter();
-  const { user, isLoading } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
-
-  // If still loading or user is not authenticated, don't render the page content
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await api.items.getAll();
-        
-        if (response && response.data) {
-          // Extract unique categories with proper typing
-          const items = response.data as ApiItem[];
-          const uniqueCategories = Array.from(
-            new Map(items.map(item => [
-              item.category.id, 
-              item.category
-            ])).values()
-          ).sort((a, b) => a.name.localeCompare(b.name));
-          
-          setCategories(uniqueCategories);
-        }
-      } catch (err) {
-        setError('Failed to load categories');
-        console.error('Error fetching categories:', err);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  
 
   // Get emoji for category
   const getCategoryEmoji = (name: string) => {

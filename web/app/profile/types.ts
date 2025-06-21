@@ -1,61 +1,66 @@
-export interface User {
-  id: number;
-  name: string | null;  // Changed from string to string | null
-  email: string;
-  password?: string;
-  phoneCountry?: string;
-  phoneNumber?: string;
-  address?: {
-    street?: string;
-    houseNumber?: string;
-    landmark?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-  };
-  bio: string | null;  // Changed from string | undefined to string | null
-  image?: string;
-  stats?: {
-    itemsListed: number;
-    totalRentals: number;
-    totalReviews: number;
-    averageRating: string;  // Changed from number to string
-  };
-  rentals?: Rental[];
-  reviews?: Review[];
-  items?: Item[];
+export interface Address {
+  street: string;
+  houseNumber: string;
+  landmark: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
 }
 
-export interface Rental {
-  id: number;
-  startDate: Date;
-  endDate: Date;
-  status: string;
-  item: {
-    id: number;
-    name: string;
-    imageUrl: string | null;
-  }
+export interface Stats {
+  itemsListed: number;
+  totalRentals: number;
+  totalReviews: number;
+  averageRating: number;
 }
 
 export interface Review {
-  id: number;
+  id: string;
   rating: number;
-  comment: string | null;
+  comment: string;
   item: {
     name: string;
-  }
+  };
 }
 
 export interface Item {
-  id: number;
+  id: string;
   name: string;
-  pricePerDay: number;
-  imageUrl: string | null;
-  available: boolean;
   category: {
     name: string;
   };
-  location: string | null;
+  pricePerDay: number;
+  imageUrl?: string;
+  location?: string;
+  available: boolean;
+}
+
+export interface Rental {
+  id: string;
+  startDate: Date;
+  status: string;
+  item: {
+    name: string;
+  };
+}
+
+export interface User {
+  name: string;
+  phoneCountry: string;
+  phoneNumber: string;
+  address: Address;
+  bio: string;
+  stats?: Stats;
+  reviews?: Review[];
+  items?: Item[];
+  rentals?: Rental[];
+}
+
+export interface FormData {
+  name: string;
+  phoneCountry: string;
+  phoneNumber: string;
+  address: Address;
+  bio: string;
 }

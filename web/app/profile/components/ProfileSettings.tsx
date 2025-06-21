@@ -3,24 +3,7 @@
 import { motion } from 'framer-motion';
 import { PencilIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-
-interface Address {
-  street?: string;
-  houseNumber?: string;
-  landmark?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
-}
-
-interface FormData {
-  name: string;
-  phoneCountry: string;
-  phoneNumber: string;
-  address: Address;
-  bio: string;
-}
+import { FormData, Address } from '../types';
 
 interface ProfileSettingsProps {
   initialData: FormData;
@@ -33,11 +16,25 @@ const countryPhoneCodes = [
   { name: 'India', code: '+91', flag: '🇮🇳' },
   { name: 'Canada', code: '+1', flag: '🇨🇦' },
   { name: 'Australia', code: '+61', flag: '🇦🇺' },
-];
+] as const;
 
 export default function ProfileSettings({ initialData, onSubmit }: ProfileSettingsProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<FormData>(initialData);
+  const [formData, setFormData] = useState({
+    name: initialData.name || '',
+    phoneCountry: initialData.phoneCountry || '',
+    phoneNumber: initialData.phoneNumber || '',
+    address: {
+      street: initialData.address?.street || '',
+      houseNumber: initialData.address?.houseNumber || '',
+      landmark: initialData.address?.landmark || '',
+      city: initialData.address?.city || '',
+      state: initialData.address?.state || '',
+      country: initialData.address?.country || '',
+      postalCode: initialData.address?.postalCode || ''
+    },
+    bio: initialData.bio || ''
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

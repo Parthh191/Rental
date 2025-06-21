@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { PlusCircleIcon } from '@heroicons/react/24/outline';
 
 interface ListedItem {
   id: number;
@@ -16,7 +15,6 @@ interface ListedItem {
 
 interface ListingsGridProps {
   items: ListedItem[];
-  onAddNew: () => void;
   onEdit: (id: number) => void;
   onRemove: (id: number) => void;
 }
@@ -33,20 +31,11 @@ const cardTapAnimation = {
   transition: { duration: 0.1 }
 };
 
-export default function ListingsGrid({ items, onAddNew, onEdit, onRemove }: ListingsGridProps) {
+export default function ListingsGrid({ items, onEdit, onRemove }: ListingsGridProps) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-white">Your Listings</h2>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onAddNew}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition duration-300"
-        >
-          <PlusCircleIcon className="h-5 w-5" />
-          Add New
-        </motion.button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {items.map((item, index) => (

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import User from './routes/user.routes';
 import Item  from "./routes/item.routes";
+import Rent from "./routes/rental.routes";
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/users', User);
 
 app.use('/api/items', Item);
+app.use('/api/rent',Rent);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

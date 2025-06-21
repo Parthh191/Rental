@@ -20,15 +20,7 @@ const transformAuthUser = (authUser: import('../context/AuthContext').User | nul
   
   return {
     ...authUser,
-    address: authUser.address ? {
-      street: '',
-      houseNumber: '',
-      landmark: '',
-      city: '',
-      state: '',
-      country: '',
-      postalCode: ''
-    } : undefined
+    address: authUser.address || undefined
   };
 };
 
@@ -145,7 +137,7 @@ export default function ProfilePage() {
       setIsLoggingOut(true);
       await logout();
       // Redirect to home page after logout
-      window.location.href = '/login';
+      window.location.href = '/';
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -189,7 +181,7 @@ export default function ProfilePage() {
       
       // Logout and redirect
       await logout();
-      window.location.href = '/signup';
+      window.location.href = '/';
     } catch (error) {
       throw error;
     }
