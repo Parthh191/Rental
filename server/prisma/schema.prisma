@@ -96,4 +96,5 @@ enum RentalStatus {
   APPROVED
   REJECTED
   COMPLETED
+  CANCELLED
 }

@@ -10,6 +10,9 @@ import { NextAuthProvider } from "./providers/NextAuthProvider";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export default function RootLayout({

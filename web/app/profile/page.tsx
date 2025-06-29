@@ -9,6 +9,7 @@ import StatsCards from './components/StatsCards';
 import ProfileTabs from './components/ProfileTabs';
 import RecentActivity from './components/RecentActivity';
 import ListingsGrid from './components/ListingsGrid';
+import RentalsGrid from './components/RentalsGrid';
 import ProfileSettings from './components/ProfileSettings';
 import SecuritySettings from './components/SecuritySettings';
 import { PlusCircleIcon, ShoppingBagIcon, StarIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
@@ -248,6 +249,29 @@ export default function ProfilePage() {
             />
           )}
 
+          {activeTab === 'rentals' && (
+            <RentalsGrid 
+              onViewRental={(id) => {
+                // Navigate to rental details page
+                window.location.href = `/rentals/${id}`;
+              }}
+            />
+          )}
+
+          {activeTab === 'favorites' && (
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-bold text-white mb-4 capitalize">{activeTab}</h2>
+              <p className="text-gray-400">This section is coming soon.</p>
+            </div>
+          )}
+
+          {activeTab === 'messages' && (
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-bold text-white mb-4 capitalize">{activeTab}</h2>
+              <p className="text-gray-400">This section is coming soon.</p>
+            </div>
+          )}
+
           {activeTab === 'settings' && profileData && (
             <div className="space-y-8">
               <ProfileSettings 
@@ -273,13 +297,6 @@ export default function ProfilePage() {
                 onChangePassword={handleChangePassword}
                 onDeleteAccount={handleDeleteAccount}
               />
-            </div>
-          )}
-
-          {(activeTab === 'rentals' || activeTab === 'favorites' || activeTab === 'messages') && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-white mb-4 capitalize">{activeTab}</h2>
-              <p className="text-gray-400">This section is coming soon.</p>
             </div>
           )}
         </div>

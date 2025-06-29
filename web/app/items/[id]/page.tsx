@@ -175,70 +175,63 @@ export default function ItemDetailsPage() {
 
           {/* Details Section */}
           <div className="space-y-6">
-            <div>
-              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+            <div className="bg-gradient-to-br from-[#18122B]/80 to-[#393053]/80 rounded-2xl shadow-2xl p-8 border border-purple-900/40 backdrop-blur-md">
+              <h1 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent drop-shadow-lg">
                 {item.name}
               </h1>
-              <span className="inline-block px-3 py-1 text-sm text-purple-400 bg-purple-500/10 rounded-full">
+              <span className="inline-block px-3 py-1 text-sm text-purple-300 bg-purple-700/20 rounded-full mb-4">
                 {item.category.name}
               </span>
-            </div>
-
-            <p className="text-gray-300 text-lg">
-              {item.description || 'No description available.'}
-            </p>
-
-            <div className="space-y-4">
-              <div className="flex items-center text-gray-300">
-                <MapPinIcon className="h-5 w-5 text-purple-500 mr-2" />
-                {item.location || 'Location not specified'}
-              </div>
-
-              <div className="flex items-center text-gray-300">
-                <UserCircleIcon className="h-5 w-5 text-purple-500 mr-2" />
-                Listed by {item.owner.name || 'Anonymous'}
-              </div>
-
-              <div className="flex items-center text-gray-300">
-                <CalendarIcon className="h-5 w-5 text-purple-500 mr-2" />
-                {item.available ? 'Available for rent' : 'Currently unavailable'}
-              </div>
-            </div>
-
-            <div className="mt-8">
-              <div className="text-3xl font-bold text-white mb-6">
-                ${item.pricePerDay.toFixed(2)}<span className="text-gray-400 text-lg font-normal"> / day</span>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative w-full group"
-                onClick={() => {
-                  // Will implement rental functionality later
-                  console.log('Rent button clicked');
-                }}
-                disabled={!item.available}
-              >
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
-                <div className="relative w-full py-4 bg-[#1a1a1a] text-white rounded-lg transition-all duration-200 font-medium flex items-center justify-center space-x-2">
-                  {item.available ? (
-                    <>
-                      <span>Rent Now</span>
-                      <svg 
-                        className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </>
-                  ) : (
-                    <span>Currently Unavailable</span>
-                  )}
+              <p className="text-gray-200 text-lg mb-6">
+                {item.description || 'No description available.'}
+              </p>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center text-gray-300">
+                  <MapPinIcon className="h-5 w-5 text-purple-400 mr-2" />
+                  {item.location || 'Location not specified'}
                 </div>
-              </motion.button>
+                <div className="flex items-center text-gray-300">
+                  <UserCircleIcon className="h-5 w-5 text-pink-400 mr-2" />
+                  Listed by {item.owner.name || 'Anonymous'}
+                </div>
+                <div className="flex items-center text-gray-300">
+                  <CalendarIcon className="h-5 w-5 text-blue-400 mr-2" />
+                  {item.available ? 'Available for rent' : 'Currently unavailable'}
+                </div>
+              </div>
+              <div className="mt-8">
+                <div className="text-3xl font-bold text-white mb-6 drop-shadow">
+                  ${item.pricePerDay.toFixed(2)}<span className="text-gray-400 text-lg font-normal"> / day</span>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="relative w-full group focus:outline-none"
+                  onClick={() => {
+                    router.push(`/rentals/new?itemId=${item.id}`);
+                  }}
+                  disabled={!item.available}
+                >
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 rounded-lg blur opacity-80 group-hover:opacity-100 transition duration-700"></div>
+                  <div className="relative w-full py-4 bg-[#18122B] text-white rounded-lg transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg border border-purple-800/40 group-hover:bg-[#393053]">
+                    {item.available ? (
+                      <>
+                        <span>Rent Now</span>
+                        <svg 
+                          className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </>
+                    ) : (
+                      <span>Currently Unavailable</span>
+                    )}
+                  </div>
+                </motion.button>
+              </div>
             </div>
           </div>
         </motion.div>

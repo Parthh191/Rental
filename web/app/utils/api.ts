@@ -172,9 +172,10 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(rentalData)
     }),
-    cancel: (id: string | number) => fetchWithAuth(`/rentals/${id}/cancel`, {
-      method: 'POST'
+    cancel: (id: string | number) => fetchWithAuth(`/rentals/${id}`, {
+      method: 'DELETE'
     }),
+    getByUser: () => fetchWithAuth('/rentals/getrentalbyuser')
   },
   
   // Add other API endpoint groups as needed

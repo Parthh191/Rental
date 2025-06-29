@@ -6,3 +6,4 @@ export { default as ProfileTabs } from './ProfileTabs';
 export { default as ProfileInformation } from './ProfileInformation';
 export { default as ListingsSection } from './ListingsSection';
 export { default as RecentActivity } from './RecentActivity';
+export { default as RentalsGrid } from './RentalsGrid';

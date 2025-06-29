@@ -23,7 +23,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/users', User);
 
 app.use('/api/items', Item);
-app.use('/api/rent',Rent);
+app.use('/api/rentals',Rent);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
