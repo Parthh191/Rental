@@ -14,6 +14,7 @@ import ProfileSettings from './components/ProfileSettings';
 import SecuritySettings from './components/SecuritySettings';
 import { PlusCircleIcon, ShoppingBagIcon, StarIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { api } from '../utils/api';
+import ChatsList from './components/ChatsList';
 
 // Helper function to transform auth user to profile user
 const transformAuthUser = (authUser: import('../context/AuthContext').User | null): User | null => {
@@ -266,9 +267,9 @@ export default function ProfilePage() {
           )}
 
           {activeTab === 'messages' && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-white mb-4 capitalize">{activeTab}</h2>
-              <p className="text-gray-400">This section is coming soon.</p>
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4 capitalize">Messages</h2>
+              <ChatsList />
             </div>
           )}
 

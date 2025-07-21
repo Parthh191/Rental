@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { MapPinIcon, UserCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { api } from '../../utils/api';
+import { createOrGetChat } from '../../utils/chatApi';
 
 interface Item {
   id: number;
@@ -231,6 +232,33 @@ export default function ItemDetailsPage() {
                     )}
                   </div>
                 </motion.button>
+                {/* Chat with Owner Button */}
+                {session?.user && Number(session.user.id) !== Number(item.owner.id) && (
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="relative w-full group focus:outline-none mt-4"
+                    onClick={async () => {
+                      try {
+                        const chat = await createOrGetChat(
+                          item.id,
+                          Number(session.user.id),
+                          item.owner.id,
+                          session.user.token
+                        );
+                        router.push(`/chat/${chat.id}`);
+                      } catch (err) {
+                        alert('Failed to start chat.');
+                      }
+                    }}
+                  >
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-pink-500 to-purple-500 rounded-lg blur opacity-80 group-hover:opacity-100 transition duration-700"></div>
+                    <div className="relative w-full py-4 bg-[#18122B] text-white rounded-lg transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg border border-blue-800/40 group-hover:bg-[#393053]">
+                      <span>Chat with Owner</span>
+                      <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                    </div>
+                  </motion.button>
+                )}
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import NavBar from "./components/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import Footer from "./components/Footer";
 import { NextAuthProvider } from "./providers/NextAuthProvider";
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,6 +21,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const hideFooter = pathname?.startsWith('/chat');
   return (
     <html lang="en" className={`${inter.variable} scroll-smooth`}>
       <body className="bg-[#0a0a0a] font-sans antialiased">
@@ -27,7 +30,7 @@ export default function RootLayout({
           <AuthProvider>
             <NavBar />
             {children}
-            <Footer/>
+            {!hideFooter && <Footer />}
           </AuthProvider>
         </NextAuthProvider>
       </body>

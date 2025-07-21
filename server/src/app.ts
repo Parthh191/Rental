@@ -3,6 +3,7 @@ import cors from "cors";
 import User from './routes/user.routes';
 import Item  from "./routes/item.routes";
 import Rent from "./routes/rental.routes";
+import chatRoutes from './routes/chat.routes';
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/users', User);
 
 app.use('/api/items', Item);
 app.use('/api/rentals',Rent);
+app.use('/api/chats', chatRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

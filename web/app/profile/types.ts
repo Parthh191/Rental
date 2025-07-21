@@ -46,6 +46,10 @@ export interface Rental {
 }
 
 export interface User {
+  id: number;
+  email: string;
+  phone: string;
+  token: string;
   name: string;
   phoneCountry: string;
   phoneNumber: string;
